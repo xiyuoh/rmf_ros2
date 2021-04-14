@@ -23,6 +23,7 @@
 
 #include <rmf_task_msgs/srv/submit_task.hpp>
 #include <rmf_task_msgs/srv/cancel_task.hpp>
+#include <rmf_task_msgs/srv/revive_task.hpp>
 #include <rmf_task_msgs/srv/get_task_list.hpp>
 
 #include <rmf_traffic_ros2/Time.hpp>
@@ -39,10 +40,12 @@ public:
 
   using SubmitTaskSrv = rmf_task_msgs::srv::SubmitTask;
   using CancelTaskSrv = rmf_task_msgs::srv::CancelTask;
+  using ReviveTaskSrv = rmf_task_msgs::srv::ReviveTask;  
   using GetTaskListSrv = rmf_task_msgs::srv::GetTaskList;
 
   rclcpp::Service<SubmitTaskSrv>::SharedPtr submit_task_srv;
   rclcpp::Service<CancelTaskSrv>::SharedPtr cancel_task_srv;
+  rclcpp::Service<ReviveTaskSrv>::SharedPtr revive_task_srv;
   rclcpp::Service<GetTaskListSrv>::SharedPtr get_task_list_srv;
 
   StatusCallback on_change_fn;
@@ -106,6 +109,16 @@ public:
       {
         auto id = request->task_id;
         response->success = this->cancel_task(id);
+      }
+    );
+
+    revive_task_srv = node->create_service<ReviveTaskSrv>(
+      rmf_task_ros2::ReviveTaskSrvName,
+      [this](
+        const std::shared_ptr<ReviveTaskSrv::Request> request,
+        std::shared_ptr<ReviveTaskSrv::Response> response)
+      {
+        response->success = this->revive_task(request->task_id);
       }
     );
 
@@ -251,6 +264,50 @@ public:
     // the FA whether to cancel the task. On change is implemented
     // internally in action client
     return action_client->cancel_task(cancel_task_status->task_profile);
+  }
+
+  bool revive_task(const TaskID& task_id)
+  {
+    auto state = get_task_state(task_id);
+
+    if (!state)
+      return false;
+
+    if (*state == TaskStatus::State::Failed || 
+        *state == TaskStatus::State::Canceled)
+    {
+      RCLCPP_INFO(
+        node->get_logger(), "Attempting to revive task [%s]", task_id.c_str());
+
+      // move the terminated task to active task
+      active_dispatch_tasks[task_id] = 
+        std::move(terminal_dispatch_tasks[task_id]);
+      terminal_dispatch_tasks.erase(task_id);
+
+      auto revive_task_status = active_dispatch_tasks[task_id];
+
+      if (on_change_fn)
+        on_change_fn(revive_task_status);
+
+      bidding::BidNotice bid_notice;
+      bid_notice.task_profile = revive_task_status->task_profile;
+      bid_notice.time_window = rmf_traffic_ros2::convert(
+        rmf_traffic::time::from_seconds(bidding_time_window));
+      queue_bidding_tasks.push(bid_notice);
+
+      if (queue_bidding_tasks.size() == 1)
+        auctioneer->start_bidding(queue_bidding_tasks.front());
+
+      return true;
+    }
+    else
+    {
+      RCLCPP_WARN(
+        node->get_logger(), 
+        "Task [%s] wasn't Canceled/Failed. Not able to revive.",
+        task_id.c_str());
+      return false;
+    }    
   }
 
   const std::optional<TaskStatus::State> get_task_state(
