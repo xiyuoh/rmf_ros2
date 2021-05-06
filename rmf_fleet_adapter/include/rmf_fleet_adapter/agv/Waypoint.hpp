@@ -24,6 +24,8 @@
 
 #include <Eigen/Geometry>
 
+#include <rmf_fleet_adapter/agv/Event.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -61,6 +63,27 @@ public:
       rmf_traffic::Duration mandatory_delay = std::chrono::nanoseconds(0),
       bool yield = true);
 
+  /// Constructor
+  ///
+  /// \param[in] map_name
+  ///   The name of the reference map that the position is on.
+  ///
+  /// \param[in] position
+  ///   A position along the robot's path where it will (or can) have zero
+  ///   instantaneous velocity. This will usually be a point where the robot
+  ///   needs to turn, or a point that comes before an intersection, so the
+  ///   robot can come to a stop and allow other vehicles to pass. This is a 2D
+  ///   heterogeneous vector. The first two elements refer to translational
+  ///   (x,y) position while the third element is a yaw value in radians.
+  ///
+  /// \param[in] event
+  ///   An event that needs to occur when the robot reaches this waypoint. The
+  ///   robot will be told to pause until the event is finished.
+  Waypoint(
+      std::string map_name,
+      Eigen::Vector3d position,
+      ConstEventPtr event);
+
   /// Get the map of this Waypoint.
   const std::string& map_name() const;
 
@@ -84,6 +107,13 @@ public:
 
   /// Set whether the robot can yield here.
   Waypoint& yield(bool on);
+
+  /// Get the event that needs to occur at this Waypoint (if any).
+  const ConstEventPtr& event() const;
+
+  /// Set the event that needs to occur at this Waypoint. Pass a nullptr to
+  /// indicate that no event needs to take place.
+  Waypoint& event(ConstEventPtr new_event);
 
   class Implementation;
 private:
