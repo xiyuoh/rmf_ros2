@@ -146,7 +146,7 @@ void EasyTrafficLight::Implementation::immediately_stop_until(
 
   const auto now = node->now();
 
-  if (time >= now)
+  if (time <= now)
     return;
 
   pause_cb();
@@ -177,7 +177,7 @@ void EasyTrafficLight::Implementation::immediately_stop_until(
 
       const auto now = node->now();
 
-      if (now <= wait_until->value())
+      if (wait_until->value() <= now)
       {
         resume_cb();
         if (const auto timer = w_timer.lock())

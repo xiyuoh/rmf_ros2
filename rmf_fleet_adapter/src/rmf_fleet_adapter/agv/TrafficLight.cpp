@@ -929,7 +929,13 @@ TrafficLight::UpdateHandle::Implementation::Data::update_timing(
   else if (last_immediate_stop.has_value())
   {
     if (now < *last_immediate_stop)
+    {
+      // When these conditions are met, it means that some time in the past we
+      // issued an order for the robot to come to an immediate stop, but a
+      // replanning has occurred and the robot no longer needs to be stopped, so
+      // we will command it to resume.
       command->resume(current_path_version);
+    }
   }
 
   if (!immediately_stop_until.has_value())
