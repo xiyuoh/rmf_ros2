@@ -123,7 +123,7 @@ public:
   // current task
   const rmf_task::agv::State& current_task_end_state() const;
 
-  /// Get the task planning constraints of this robot 
+  /// Get the task planning constraints of this robot
   const rmf_task::agv::Constraints& task_planning_constraints() const;
 
   /// Get the current battery state of charge

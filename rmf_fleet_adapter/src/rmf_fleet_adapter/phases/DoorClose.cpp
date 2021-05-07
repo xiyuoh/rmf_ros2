@@ -25,12 +25,12 @@ namespace phases {
 
 //==============================================================================
 std::shared_ptr<DoorClose::ActivePhase> DoorClose::ActivePhase::make(
-  agv::RobotContextPtr context,
+  agv::NodePtr node,
   std::string door_name,
   std::string request_id)
 {
   auto inst = std::shared_ptr<ActivePhase>(new ActivePhase(
-    std::move(context),
+    std::move(node),
     std::move(door_name),
     std::move(request_id)
   ));
@@ -75,7 +75,7 @@ void DoorClose::ActivePhase::_init_obs()
 {
   using rmf_door_msgs::msg::DoorRequest;
   using rmf_door_msgs::msg::SupervisorHeartbeat;
-  _obs = _context->node()->door_supervisor()
+  _obs = _node->door_supervisor()
     .lift<SupervisorHeartbeat::SharedPtr>(on_subscribe([weak = weak_from_this()]()
     {
       auto me = weak.lock();
@@ -84,7 +84,7 @@ void DoorClose::ActivePhase::_init_obs()
 
       me->_status.state = Task::StatusMsg::STATE_ACTIVE;
       me->_publish_close_door();
-      me->_timer = me->_context->node()->create_wall_timer(
+      me->_timer = me->_node->create_wall_timer(
         std::chrono::milliseconds(1000),
         [weak]()
         {
@@ -120,10 +120,10 @@ void DoorClose::ActivePhase::_publish_close_door()
 {
   rmf_door_msgs::msg::DoorRequest msg{};
   msg.door_name = _door_name;
-  msg.request_time = _context->node()->now();
+  msg.request_time = _node->now();
   msg.requested_mode.value = rmf_door_msgs::msg::DoorMode::MODE_CLOSED;
   msg.requester_id = _request_id;
-  _context->node()->door_request()->publish(msg);
+  _node->door_request()->publish(msg);
 }
 
 //==============================================================================
@@ -137,17 +137,17 @@ void DoorClose::ActivePhase::_update_status(
   }
   else
   {
-    _status.status = "[" + _context->name() + "] waiting for door ["
+    _status.status = "[" + _request_id + "] waiting for door ["
         + _door_name + "] to close";
   }
 }
 
 //==============================================================================
 DoorClose::ActivePhase::ActivePhase(
-  agv::RobotContextPtr context,
+  agv::NodePtr node,
   std::string door_name,
   std::string request_id)
-  : _context(std::move(context)),
+  : _node(std::move(node)),
     _door_name(std::move(door_name)),
     _request_id(std::move(request_id))
 {
@@ -159,7 +159,19 @@ DoorClose::PendingPhase::PendingPhase(
   agv::RobotContextPtr context,
   std::string door_name,
   std::string request_id)
-  : _context(std::move(context)),
+  : _node(context->node()),
+    _door_name(std::move(door_name)),
+    _request_id(std::move(request_id))
+{
+  _description = "Close door \"" + _door_name + "\"";
+}
+
+//==============================================================================
+DoorClose::PendingPhase::PendingPhase(
+  agv::NodePtr node,
+  std::string door_name,
+  std::string request_id)
+  : _node(std::move(node)),
     _door_name(std::move(door_name)),
     _request_id(std::move(request_id))
 {
@@ -170,7 +182,7 @@ DoorClose::PendingPhase::PendingPhase(
 std::shared_ptr<Task::ActivePhase> DoorClose::PendingPhase::begin()
 {
   return DoorClose::ActivePhase::make(
-    _context,
+    _node,
     _door_name,
     _request_id);
 }

@@ -43,23 +43,23 @@ struct DoorClose
   public:
 
     static std::shared_ptr<ActivePhase> make(
-      agv::RobotContextPtr context,
+      agv::NodePtr node,
       std::string door_name,
       std::string request_id);
 
-    const rxcpp::observable<Task::StatusMsg>& observe() const override;
+    const rxcpp::observable<Task::StatusMsg>& observe() const final;
 
-    rmf_traffic::Duration estimate_remaining_time() const override;
+    rmf_traffic::Duration estimate_remaining_time() const final;
 
-    void emergency_alarm(bool on) override;
+    void emergency_alarm(bool on) final;
 
     void cancel() override;
 
-    const std::string& description() const override;
+    const std::string& description() const final;
 
   private:
 
-    agv::RobotContextPtr _context;
+    agv::NodePtr _node;
     std::string _door_name;
     std::string _request_id;
     rxcpp::observable<Task::StatusMsg> _obs;
@@ -68,7 +68,7 @@ struct DoorClose
     Task::StatusMsg _status;
 
     ActivePhase(
-      agv::RobotContextPtr context,
+      agv::NodePtr context,
       std::string door_name,
       std::string request_id);
 
@@ -88,6 +88,11 @@ struct DoorClose
       std::string door_name,
       std::string request_id);
 
+    PendingPhase(
+      agv::NodePtr node,
+      std::string door_name,
+      std::string request_id);
+
     std::shared_ptr<Task::ActivePhase> begin() override;
 
     rmf_traffic::Duration estimate_phase_duration() const override;
@@ -96,7 +101,7 @@ struct DoorClose
 
   private:
 
-    agv::RobotContextPtr _context;
+    agv::NodePtr _node;
     std::string _door_name;
     std::string _request_id;
     std::string _description;

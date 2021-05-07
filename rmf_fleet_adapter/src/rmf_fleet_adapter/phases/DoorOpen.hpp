@@ -44,10 +44,10 @@ struct DoorOpen
   public:
 
     static std::shared_ptr<ActivePhase> make(
-      agv::RobotContextPtr context,
+      agv::NodePtr node,
       std::string door_name,
       std::string request_id,
-      rmf_traffic::Time expected_finish);
+      std::function<void()> waiting_cb);
 
     const rxcpp::observable<Task::StatusMsg>& observe() const override;
 
@@ -61,9 +61,10 @@ struct DoorOpen
 
   private:
 
-    agv::RobotContextPtr _context;
+    agv::NodePtr _node;
     std::string _door_name;
     std::string _request_id;
+    std::function<void()> _waiting_cb;
     rmf_traffic::Time _expected_finish;
     rxcpp::subjects::behavior<bool> _cancelled = rxcpp::subjects::behavior<bool>(false);
     rxcpp::observable<Task::StatusMsg> _obs;
@@ -73,10 +74,10 @@ struct DoorOpen
     std::shared_ptr<DoorClose::ActivePhase> _door_close_phase;
 
     ActivePhase(
-      agv::RobotContextPtr context,
+      agv::NodePtr context,
       std::string door_name,
       std::string request_id,
-      rmf_traffic::Time expected_finish);
+      std::function<void()> waiting_cb);
 
     void _init_obs();
 
@@ -97,6 +98,12 @@ struct DoorOpen
       std::string request_id,
       rmf_traffic::Time expected_finish);
 
+    PendingPhase(
+      agv::NodePtr node,
+      std::string door_name,
+      std::string request_id,
+      std::function<void()> waiting_cb);
+
     std::shared_ptr<Task::ActivePhase> begin() override;
 
     rmf_traffic::Duration estimate_phase_duration() const override;
@@ -105,10 +112,10 @@ struct DoorOpen
 
   private:
 
-    agv::RobotContextPtr _context;
+    agv::NodePtr _node;
     std::string _door_name;
     std::string _request_id;
-    rmf_traffic::Time _expected_finish;
+    std::function<void()> _waiting_cb;
     std::string _description;
   };
 };

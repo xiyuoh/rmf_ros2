@@ -23,13 +23,15 @@ namespace phases {
 
 //==============================================================================
 std::shared_ptr<EndLiftSession::Active> EndLiftSession::Active::make(
-  agv::RobotContextPtr context,
+  std::string requester_id,
+  agv::NodePtr node,
   std::string lift_name,
   std::string destination)
 {
   auto inst = std::shared_ptr<Active>(
         new Active(
-          std::move(context),
+          std::move(requester_id),
+          std::move(node),
           std::move(lift_name),
           std::move(destination)));
   inst->_init_obs();
@@ -38,10 +40,12 @@ std::shared_ptr<EndLiftSession::Active> EndLiftSession::Active::make(
 
 //==============================================================================
 EndLiftSession::Active::Active(
-  agv::RobotContextPtr context,
+  std::string requester_id,
+  agv::NodePtr node,
   std::string lift_name,
   std::string destination)
-: _context(std::move(context)),
+: _requester_id(std::move(requester_id)),
+  _node(std::move(node)),
   _lift_name(std::move(lift_name)),
   _destination(std::move(destination))
 {
@@ -85,7 +89,7 @@ void EndLiftSession::Active::_init_obs()
 {
   using rmf_lift_msgs::msg::LiftRequest;
   using rmf_lift_msgs::msg::LiftState;
-  _obs = _context->node()->lift_state()
+  _obs = _node->lift_state()
     .lift<LiftState::SharedPtr>(on_subscribe([weak = weak_from_this()]()
     {
       const auto me = weak.lock();
@@ -93,7 +97,7 @@ void EndLiftSession::Active::_init_obs()
         return;
 
       me->_publish_session_end();
-      me->_timer = me->_context->node()->create_wall_timer(
+      me->_timer = me->_node->create_wall_timer(
         std::chrono::milliseconds(1000),
         [weak]()
         {
@@ -116,7 +120,7 @@ void EndLiftSession::Active::_init_obs()
       if (state->lift_name != me->_lift_name)
         return msg;
 
-      if (state->session_id != me->_context->requester_id())
+      if (state->session_id != me->_requester_id)
       {
         msg.status = "success";
         msg.state = Task::StatusMsg::STATE_COMPLETED;
@@ -142,9 +146,9 @@ void EndLiftSession::Active::_publish_session_end()
   msg.lift_name = _lift_name;
   msg.destination_floor = _destination;
   msg.request_type = rmf_lift_msgs::msg::LiftRequest::REQUEST_END_SESSION;
-  msg.session_id = _context->requester_id();
+  msg.session_id = _requester_id;
 
-  _context->node()->lift_request()->publish(msg);
+  _node->lift_request()->publish(msg);
 }
 
 //==============================================================================
@@ -152,18 +156,34 @@ EndLiftSession::Pending::Pending(
   agv::RobotContextPtr context,
   std::string lift_name,
   std::string destination)
-: _context(std::move(context)),
+: _requester_id(context->requester_id()),
+  _node(context->node()),
   _lift_name(std::move(lift_name)),
   _destination(std::move(destination))
 {
-  _description = "End session with lift [" + lift_name + "]";
+  _description = "End session with lift [" + _lift_name + "]";
+}
+
+//==============================================================================
+EndLiftSession::Pending::Pending(
+  std::string requester_id,
+  agv::NodePtr node,
+  std::string lift_name,
+  std::string destination)
+: _requester_id(std::move(requester_id)),
+  _node(std::move(node)),
+  _lift_name(std::move(lift_name)),
+  _destination(std::move(destination))
+{
+  _description = "End session with lift [" + _lift_name + "]";
 }
 
 //==============================================================================
 std::shared_ptr<Task::ActivePhase> EndLiftSession::Pending::begin()
 {
   return Active::make(
-    std::move(_context),
+    std::move(_requester_id),
+    std::move(_node),
     std::move(_lift_name),
     std::move(_destination));
 }

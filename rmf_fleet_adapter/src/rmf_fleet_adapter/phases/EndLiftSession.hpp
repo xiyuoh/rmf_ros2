@@ -32,14 +32,10 @@ struct EndLiftSession
   public:
 
     static std::shared_ptr<Active> make(
-        agv::RobotContextPtr context,
+        std::string requester_id,
+        agv::NodePtr node,
         std::string lift_name,
         std::string destination);
-
-    Active(
-      agv::RobotContextPtr context,
-      std::string lift_name,
-      std::string destination);
 
     const rxcpp::observable<Task::StatusMsg>& observe() const override;
 
@@ -53,7 +49,14 @@ struct EndLiftSession
 
   private:
 
-    agv::RobotContextPtr _context;
+    Active(
+      std::string requester_id,
+      agv::NodePtr node,
+      std::string lift_name,
+      std::string destination);
+
+    std::string _requester_id;
+    agv::NodePtr _node;
     std::string _lift_name;
     std::string _destination;
     std::string _description;
@@ -73,6 +76,12 @@ struct EndLiftSession
       std::string lift_name,
       std::string destination);
 
+    Pending(
+      std::string requester_id,
+      agv::NodePtr node,
+      std::string lift_name,
+      std::string destination);
+
     std::shared_ptr<Task::ActivePhase> begin() final;
 
     rmf_traffic::Duration estimate_phase_duration() const final;
@@ -80,7 +89,8 @@ struct EndLiftSession
     const std::string& description() const override;
 
   private:
-    agv::RobotContextPtr _context;
+    std::string _requester_id;
+    agv::NodePtr _node;
     std::string _lift_name;
     std::string _destination;
     std::string _description;

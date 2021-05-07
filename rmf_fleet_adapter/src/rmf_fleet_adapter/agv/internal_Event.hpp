@@ -46,7 +46,12 @@ public:
     virtual const rxcpp::observable<Empty>& observe() const = 0;
   };
 
-  virtual std::shared_ptr<Active> begin(RobotContextPtr context) const = 0;
+  virtual std::shared_ptr<Active> begin(
+    std::string requester_id,
+    NodePtr node,
+    std::function<void()> waiting_cb,
+    rxcpp::schedulers::worker worker) const = 0;
+
 };
 
 } // namespace agv

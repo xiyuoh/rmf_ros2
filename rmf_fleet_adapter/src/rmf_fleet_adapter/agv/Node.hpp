@@ -129,6 +129,8 @@ private:
 
 };
 
+using NodePtr = std::shared_ptr<Node>;
+
 } // namespace agv
 } // namespace rmf_fleet_adapter
 

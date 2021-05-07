@@ -24,18 +24,24 @@ namespace phases {
 
 //==============================================================================
 std::shared_ptr<RequestLift::ActivePhase> RequestLift::ActivePhase::make(
-  agv::RobotContextPtr context,
+  std::string requester_id,
+  agv::NodePtr node,
   std::string lift_name,
   std::string destination,
-  rmf_traffic::Time expected_finish,
+  std::function<void()> waiting_cb,
+  Watchdog watchdog,
+  rmf_traffic::Duration lift_rewait_duration,
   const Located located)
 {
   auto inst = std::shared_ptr<ActivePhase>(
     new ActivePhase(
-      std::move(context),
+      std::move(requester_id),
+      std::move(node),
       std::move(lift_name),
       std::move(destination),
-      std::move(expected_finish),
+      std::move(waiting_cb),
+      std::move(watchdog),
+      lift_rewait_duration,
       located
   ));
   inst->_init_obs();
@@ -75,15 +81,21 @@ const std::string& RequestLift::ActivePhase::description() const
 
 //==============================================================================
 RequestLift::ActivePhase::ActivePhase(
-  agv::RobotContextPtr context,
+  std::string requester_id,
+  agv::NodePtr node,
   std::string lift_name,
   std::string destination,
-  rmf_traffic::Time expected_finish,
+  std::function<void()> waiting_cb,
+  Watchdog watchdog,
+  rmf_traffic::Duration lift_rewait_duration,
   Located located)
-  : _context(std::move(context)),
+  : _requester_id(std::move(requester_id)),
+    _node(std::move(node)),
     _lift_name(std::move(lift_name)),
     _destination(std::move(destination)),
-    _expected_finish(std::move(expected_finish)),
+    _waiting_cb(std::move(waiting_cb)),
+    _watchdog(std::move(watchdog)),
+    _lift_rewait_duration(lift_rewait_duration),
     _located(located)
 {
   std::ostringstream oss;
@@ -97,7 +109,7 @@ void RequestLift::ActivePhase::_init_obs()
 {
   using rmf_lift_msgs::msg::LiftState;
 
-  _obs = _context->node()->lift_state()
+  _obs = _node->lift_state()
     .lift<LiftState::SharedPtr>(on_subscribe([weak = weak_from_this()]()
     {
       auto me = weak.lock();
@@ -105,7 +117,7 @@ void RequestLift::ActivePhase::_init_obs()
         return;
 
       me->_do_publish();
-      me->_timer = me->_context->node()->create_wall_timer(
+      me->_timer = me->_node->create_wall_timer(
         std::chrono::milliseconds(1000),
         [weak]()
         {
@@ -116,19 +128,7 @@ void RequestLift::ActivePhase::_init_obs()
           // TODO(MXG): We can stop publishing the door request once the
           // supervisor sees our request.
           me->_do_publish();
-
-          const auto current_expected_finish =
-              me->_expected_finish + me->_context->itinerary().delay();
-
-          const auto delay = me->_context->now() - current_expected_finish;
-          if (delay > std::chrono::seconds(0))
-          {
-            me->_context->worker().schedule(
-                  [context = me->_context, delay](const auto&)
-            {
-              context->itinerary().delay(delay);
-            });
-          }
+          me->_waiting_cb();
         });
     }))
     .map([weak = weak_from_this()](const auto& v)
@@ -169,9 +169,9 @@ void RequestLift::ActivePhase::_init_obs()
         }
         else if (me->_located == Located::Outside)
         {
-          auto transport = me->_context->node();
           me->_lift_end_phase = EndLiftSession::Active::make(
-            me->_context,
+            me->_requester_id,
+            me->_node,
             me->_lift_name,
             me->_destination);
 
@@ -192,10 +192,9 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
       lift_state->lift_name == _lift_name &&
       lift_state->current_floor == _destination &&
       lift_state->door_state == LiftState::DOOR_OPEN &&
-      lift_state->session_id == _context->requester_id())
+      lift_state->session_id == _requester_id)
   {
     bool completed = false;
-    const auto& watchdog = _context->get_lift_watchdog();
 
     if (_watchdog_info)
     {
@@ -212,10 +211,10 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
           case agv::RobotUpdateHandle::Unstable::Decision::Undefined:
           {
             RCLCPP_ERROR(
-              _context->node()->get_logger(),
+              _node->get_logger(),
               "Received undefined decision for lift watchdog of [%s]. "
               "Defaulting to a Crowded decision.",
-              _context->name().c_str());
+              _requester_id.c_str());
             // Intentionally drop to the next case
             [[fallthrough]];
           }
@@ -224,15 +223,15 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
             _rewaiting = true;
 
             _lift_end_phase = EndLiftSession::Active::make(
-              _context, _lift_name, _destination);
+              _requester_id, _node, _lift_name, _destination);
             _reset_session_subscription = _lift_end_phase->observe()
                 .subscribe([](const auto&)
             {
               // Do nothing
             });
 
-            _rewait_timer = _context->node()->create_wall_timer(
-              _context->get_lift_rewait_duration(),
+            _rewait_timer = _node->create_wall_timer(
+              _lift_rewait_duration,
               [w = weak_from_this()]()
             {
               if (const auto& me = w.lock())
@@ -250,10 +249,10 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
         _watchdog_info.reset();
       }
     }
-    else if (_located == Located::Outside && watchdog)
+    else if (_located == Located::Outside && _watchdog)
     {
       _watchdog_info = std::make_shared<WatchdogInfo>();
-      watchdog(
+      _watchdog(
         _lift_name,
         [info = _watchdog_info](
           agv::RobotUpdateHandle::Unstable::Decision decision)
@@ -276,18 +275,18 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
   }
   else if (_rewaiting)
   {
-    status.status = "[" + _context->name() + "] is waiting for lift ["
+    status.status = "[" + _requester_id + "] is waiting for lift ["
         + _lift_name + "] to clear out";
   }
   else if (lift_state->lift_name == _lift_name)
   {
     // TODO(MXG): Make this a more human-friendly message
-    status.status = "[" + _context->name() + "] still waiting for lift ["
+    status.status = "[" + _requester_id + "] still waiting for lift ["
         + _lift_name + "]  current state: "
         + lift_state->current_floor + " vs " + _destination + " | "
         + std::to_string(static_cast<int>(lift_state->door_state))
         + " vs " + std::to_string(static_cast<int>(LiftState::DOOR_OPEN))
-        + " | " + lift_state->session_id + " vs " + _context->requester_id();
+        + " | " + lift_state->session_id + " vs " + _requester_id;
   }
 
   return status;
@@ -302,11 +301,11 @@ void RequestLift::ActivePhase::_do_publish()
   rmf_lift_msgs::msg::LiftRequest msg{};
   msg.lift_name = _lift_name;
   msg.destination_floor = _destination;
-  msg.session_id = _context->requester_id();
-  msg.request_time = _context->node()->now();
+  msg.session_id = _requester_id;
+  msg.request_time = _node->now();
   msg.request_type = rmf_lift_msgs::msg::LiftRequest::REQUEST_AGV_MODE;
   msg.door_state = rmf_lift_msgs::msg::LiftRequest::DOOR_OPEN;
-  _context->node()->lift_request()->publish(msg);
+  _node->lift_request()->publish(msg);
 }
 
 //==============================================================================
@@ -316,26 +315,68 @@ RequestLift::PendingPhase::PendingPhase(
   std::string destination,
   rmf_traffic::Time expected_finish,
   Located located)
-  : _context(std::move(context)),
+  : _requester_id(context->requester_id()),
+    _node(context->node()),
     _lift_name(std::move(lift_name)),
     _destination(std::move(destination)),
-    _expected_finish(std::move(expected_finish)),
+    _watchdog(context->get_lift_watchdog()),
+    _lift_rewait_duration(context->get_lift_rewait_duration()),
     _located(located)
 {
-  std::ostringstream oss;
-  oss << "Requesting lift \"" << lift_name << "\" to \"" << destination << "\"";
+  _waiting_cb = [context, expected_finish]()
+  {
+    const auto current_expected_finish =
+        expected_finish + context->itinerary().delay();
 
-  _description = oss.str();
+    const auto delay = context->now() - current_expected_finish;
+    if (delay > std::chrono::seconds(0))
+    {
+      context->worker().schedule(
+            [context, delay](const auto&)
+      {
+        context->itinerary().delay(delay);
+      });
+    }
+  };
+
+  _description =
+    "Requesting lift [" + _lift_name + "] to [" + _destination + "]";
+}
+
+//==============================================================================
+RequestLift::PendingPhase::PendingPhase(
+  std::string requester_id,
+  agv::NodePtr node,
+  std::string lift_name,
+  std::string destination,
+  std::function<void()> waiting_cb,
+  Watchdog watchdog,
+  rmf_traffic::Duration lift_rewait_duration,
+  Located located)
+: _requester_id(std::move(requester_id)),
+  _node(std::move(node)),
+  _lift_name(std::move(lift_name)),
+  _destination(std::move(destination)),
+  _waiting_cb(std::move(waiting_cb)),
+  _watchdog(std::move(watchdog)),
+  _lift_rewait_duration(lift_rewait_duration),
+  _located(located)
+{
+  _description =
+    "Requesting lift [" + _lift_name + "] to [" + _destination + "]";
 }
 
 //==============================================================================
 std::shared_ptr<Task::ActivePhase> RequestLift::PendingPhase::begin()
 {
   return ActivePhase::make(
-    _context,
+    _requester_id,
+    _node,
     _lift_name,
     _destination,
-    _expected_finish,
+    _waiting_cb,
+    _watchdog,
+    _lift_rewait_duration,
     _located);
 }
 

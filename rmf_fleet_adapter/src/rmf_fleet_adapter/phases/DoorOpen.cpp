@@ -27,17 +27,17 @@ namespace phases {
 
 //==============================================================================
 std::shared_ptr<DoorOpen::ActivePhase> DoorOpen::ActivePhase::make(
-  agv::RobotContextPtr context,
+  agv::NodePtr context,
   std::string door_name,
   std::string request_id,
-  rmf_traffic::Time expected_finish)
+  std::function<void()> waiting_cb)
 {
   auto inst = std::shared_ptr<ActivePhase>(
     new ActivePhase(
       std::move(context),
       std::move(door_name),
       std::move(request_id),
-      std::move(expected_finish)
+      std::move(waiting_cb)
   ));
   inst->_init_obs();
   return inst;
@@ -45,14 +45,14 @@ std::shared_ptr<DoorOpen::ActivePhase> DoorOpen::ActivePhase::make(
 
 //==============================================================================
 DoorOpen::ActivePhase::ActivePhase(
-  agv::RobotContextPtr context,
+  agv::NodePtr node,
   std::string door_name,
   std::string request_id,
-  rmf_traffic::Time expected_finish)
-  :  _context(std::move(context)),
+  std::function<void()> waiting_cb)
+  : _node(std::move(node)),
     _door_name(std::move(door_name)),
     _request_id(std::move(request_id)),
-    _expected_finish(std::move(expected_finish))
+    _waiting_cb(std::move(waiting_cb))
 {
   _description = "Opening door \"" + _door_name + "\"";
 }
@@ -91,7 +91,7 @@ const std::string& DoorOpen::ActivePhase::description() const
 //==============================================================================
 void DoorOpen::ActivePhase::_init_obs()
 {
-  auto transport = _context->node();
+  auto transport = _node;
 
   using rmf_door_msgs::msg::DoorRequest;
   using rmf_door_msgs::msg::DoorState;
@@ -117,19 +117,7 @@ void DoorOpen::ActivePhase::_init_obs()
         // TODO(MXG): We can stop publishing the door request once the
         // supervisor sees our request.
         me->_publish_open_door();
-
-        const auto current_expected_finish =
-            me->_expected_finish + me->_context->itinerary().delay();
-
-        const auto delay = me->_context->now() - current_expected_finish;
-        if (delay > std::chrono::seconds(0))
-        {
-          me->_context->worker().schedule(
-                [context = me->_context, delay](const auto&)
-          {
-            context->itinerary().delay(delay);
-          });
-        }
+        me->_waiting_cb();
       });
     }))
     .map([weak = weak_from_this()](const auto& v)
@@ -165,9 +153,8 @@ void DoorOpen::ActivePhase::_init_obs()
           s.on_completed();
         else
         {
-          auto transport = me->_context->node();
           me->_door_close_phase = DoorClose::ActivePhase::make(
-            me->_context,
+            me->_node,
             me->_door_name,
             me->_request_id
           );
@@ -181,10 +168,10 @@ void DoorOpen::ActivePhase::_publish_open_door()
 {
   rmf_door_msgs::msg::DoorRequest msg;
   msg.door_name = _door_name;
-  msg.request_time = _context->node()->now();
+  msg.request_time = _node->now();
   msg.requested_mode.value = rmf_door_msgs::msg::DoorMode::MODE_OPEN;
   msg.requester_id = _request_id;
-  _context->node()->door_request()->publish(msg);
+  _node->door_request()->publish(msg);
 }
 
 //==============================================================================
@@ -202,7 +189,7 @@ void DoorOpen::ActivePhase::_update_status(
   }
   else
   {
-    _status.status = "[" + _context->name() + "] waiting for door ["
+    _status.status = "[" + _request_id + "] waiting for door ["
         + _door_name + "] to open";
   }
 }
@@ -210,13 +197,42 @@ void DoorOpen::ActivePhase::_update_status(
 //==============================================================================
 DoorOpen::PendingPhase::PendingPhase(
   agv::RobotContextPtr context,
-  std::string  door_name,
+  std::string door_name,
   std::string request_id,
   rmf_traffic::Time expected_finish)
-  :  _context(std::move(context)),
+  : _node(context->node()),
     _door_name(std::move(door_name)),
-    _request_id(std::move(request_id)),
-    _expected_finish(std::move(expected_finish))
+    _request_id(std::move(request_id))
+{
+  _description = "Open door \"" + _door_name + "\"";
+
+  _waiting_cb = [context, expected_finish]()
+  {
+    const auto current_expected_finish =
+        expected_finish + context->itinerary().delay();
+
+    const auto delay = context->now() - current_expected_finish;
+    if (delay > std::chrono::seconds(0))
+    {
+      context->worker().schedule(
+            [context, delay](const auto&)
+      {
+        context->itinerary().delay(delay);
+      });
+    }
+  };
+}
+
+//==============================================================================
+DoorOpen::PendingPhase::PendingPhase(
+  agv::NodePtr node,
+  std::string door_name,
+  std::string requester_id,
+  std::function<void()> waiting_cb)
+  : _node(std::move(node)),
+    _door_name(std::move(door_name)),
+    _request_id(std::move(requester_id)),
+    _waiting_cb(std::move(waiting_cb))
 {
   _description = "Open door \"" + _door_name + "\"";
 }
@@ -224,7 +240,7 @@ DoorOpen::PendingPhase::PendingPhase(
 //==============================================================================
 std::shared_ptr<Task::ActivePhase> DoorOpen::PendingPhase::begin()
 {
-  return ActivePhase::make(_context, _door_name, _request_id, _expected_finish);
+  return ActivePhase::make(_node, _door_name, _request_id, _waiting_cb);
 }
 
 //==============================================================================

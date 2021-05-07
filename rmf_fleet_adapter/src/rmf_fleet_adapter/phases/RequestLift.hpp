@@ -28,6 +28,8 @@ namespace phases {
 
 struct RequestLift
 {
+  using Watchdog = agv::RobotUpdateHandle::Unstable::Watchdog;
+
   enum class Located
   {
     Inside,
@@ -39,10 +41,13 @@ struct RequestLift
   public:
 
     static std::shared_ptr<ActivePhase> make(
-      agv::RobotContextPtr context,
+      std::string requester_id,
+      agv::NodePtr node,
       std::string lift_name,
       std::string destination,
-      rmf_traffic::Time expected_finish,
+      std::function<void()> waiting_cb,
+      Watchdog watchdog,
+      rmf_traffic::Duration lift_rewait_duration,
       Located located);
 
     const rxcpp::observable<Task::StatusMsg>& observe() const override;
@@ -57,10 +62,13 @@ struct RequestLift
 
   private:
 
-    agv::RobotContextPtr _context;
+    std::string _requester_id;
+    agv::NodePtr _node;
     std::string _lift_name;
     std::string _destination;
-    rmf_traffic::Time _expected_finish;
+    std::function<void()> _waiting_cb;
+    Watchdog _watchdog;
+    rmf_traffic::Duration _lift_rewait_duration;
     rxcpp::subjects::behavior<bool> _cancelled = rxcpp::subjects::behavior<bool>(false);
     std::string _description;
     rxcpp::observable<Task::StatusMsg> _obs;
@@ -80,10 +88,13 @@ struct RequestLift
     bool _rewaiting = false;
 
     ActivePhase(
-      agv::RobotContextPtr context,
+      std::string requester_id,
+      agv::NodePtr node,
       std::string lift_name,
       std::string destination,
-      rmf_traffic::Time expected_finish,
+      std::function<void()> waiting_cb,
+      Watchdog watchdog,
+      rmf_traffic::Duration lift_rewait_duration,
       Located located);
 
     void _init_obs();
@@ -104,6 +115,16 @@ struct RequestLift
       rmf_traffic::Time expected_finish,
       Located located);
 
+    PendingPhase(
+      std::string requester_id,
+      agv::NodePtr node,
+      std::string lift_name,
+      std::string destination,
+      std::function<void()> waiting_cb,
+      Watchdog watchdog,
+      rmf_traffic::Duration lift_rewait_duration,
+      Located located);
+
     std::shared_ptr<Task::ActivePhase> begin() override;
 
     rmf_traffic::Duration estimate_phase_duration() const override;
@@ -111,10 +132,13 @@ struct RequestLift
     const std::string& description() const override;
 
   private:
-    agv::RobotContextPtr _context;
+    std::string _requester_id;
+    agv::NodePtr _node;
     std::string _lift_name;
     std::string _destination;
-    rmf_traffic::Time _expected_finish;
+    std::function<void()> _waiting_cb;
+    Watchdog _watchdog;
+    rmf_traffic::Duration _lift_rewait_duration;
     Located _located;
     std::string _description;
   };
