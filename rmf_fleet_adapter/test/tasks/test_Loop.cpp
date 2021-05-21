@@ -179,7 +179,7 @@ SCENARIO("Test loop requests")
           ++completed_1_count;
         }
         else
-          CHECK(false);
+          return; // ResponsiveWait
       }
       else
       {
@@ -188,7 +188,7 @@ SCENARIO("Test loop requests")
         else if (msg->task_id == loop_1)
           at_least_one_incomplete_task_1 = true;
         else
-          CHECK(false);
+          return; // ResponsiveWait
       }
 
       if (msg->task_id == loop_0)
