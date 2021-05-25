@@ -28,8 +28,8 @@ namespace agv {
 //==============================================================================
 struct NodeWithContext
 {
-  std::shared_ptr<Node> node;
   std::shared_ptr<rclcpp::Context> context;
+  std::shared_ptr<Node> node;
 
   CHECK_LEAK("NodeWithContext");
 //  ~NodeWithContext()

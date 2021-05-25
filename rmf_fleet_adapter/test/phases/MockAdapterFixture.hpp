@@ -35,8 +35,6 @@ struct MockAdapterFixture
 {
   struct Data
   {
-    std::shared_ptr<agv::test::MockAdapter> adapter;
-    std::shared_ptr<agv::FleetUpdateHandle> fleet;
     std::shared_ptr<agv::Node> node;
     std::shared_ptr<rclcpp::Node> ros_node;
     rmf_traffic::agv::Graph graph;
@@ -44,13 +42,16 @@ struct MockAdapterFixture
     static std::size_t _node_counter;
     std::shared_ptr<rclcpp::Context> _context;
 
+    std::shared_ptr<agv::test::MockAdapter> adapter;
+    std::shared_ptr<agv::FleetUpdateHandle> fleet;
+
     ~Data()
     {
-      if (adapter)
-      {
-        adapter->stop();
-        rclcpp::shutdown(_context);
-      }
+//      if (adapter)
+//      {
+//        adapter->stop();
+//        rclcpp::shutdown(_context);
+//      }
     }
   };
 

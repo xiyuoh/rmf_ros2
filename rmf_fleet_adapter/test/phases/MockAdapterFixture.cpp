@@ -161,19 +161,16 @@ auto MockAdapterFixture::add_robot(
   return info;
 }
 
+//==============================================================================
 MockAdapterFixture::~MockAdapterFixture()
 {
-//  std::weak_ptr<rclcpp::Node> weak_node = data->ros_node;
-//  data.reset();
-//  while (weak_node.lock())
-//  {
-//    // TODO: Don't busy wait
-//  }
+  std::weak_ptr<rclcpp::Node> weak_node = data->node;
+  data.reset();
 
-//  std::cout << "start wait" << std::endl;
-//  using namespace std::chrono_literals;
-//  std::this_thread::sleep_for(2000ms);
-//  std::cout << "finish wait" << std::endl;
+  while (weak_node.lock())
+  {
+    std::cout << " === waiting" << std::endl;
+  }
 }
 
 } // namespace test

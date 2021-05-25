@@ -28,6 +28,8 @@
 #include <rmf_battery/DevicePowerSink.hpp>
 #include <rmf_battery/MotionPowerSink.hpp>
 
+#include <rmf_traffic/debug/Plumber.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -174,6 +176,8 @@ public:
   /// publishing. The default value is 1s.
   FleetUpdateHandle& fleet_state_publish_period(
     std::optional<rmf_traffic::Duration> value);
+
+  CHECK_LEAK("FleetUpdateHandle");
 
   class Implementation;
 private:

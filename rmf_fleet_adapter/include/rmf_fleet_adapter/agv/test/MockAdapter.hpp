@@ -26,6 +26,8 @@
 
 #include <rmf_traffic/schedule/Snapshot.hpp>
 
+#include <rmf_traffic/debug/Plumber.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 namespace test {
@@ -70,6 +72,10 @@ public:
 
   /// Submit a task request
   void dispatch_task(const rmf_task_msgs::msg::TaskProfile& profile);
+
+  ~MockAdapter();
+
+  CHECK_LEAK("MockAdapter");
 
   class Implementation;
 private:
