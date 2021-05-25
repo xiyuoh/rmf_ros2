@@ -259,7 +259,7 @@ void TaskManager::set_queue(
       msg.task_profile.description.task_type = task_type_msg;
       msg.start_time = rmf_traffic_ros2::convert(
         _queue.back()->deployment_time());
-      msg.start_time = rmf_traffic_ros2::convert(
+      msg.end_time = rmf_traffic_ros2::convert(
         _queue.back()->finish_state().finish_time());
       this->_context->node()->task_summary()->publish(msg);
     }
@@ -477,7 +477,7 @@ void TaskManager::retreat_to_charger()
 
   const auto& constraints = task_planner->configuration().constraints();
   const double threshold_soc = constraints.threshold_soc();
-  const double retreat_threshold = 1.2 * threshold_soc; // safety factor
+  const double retreat_threshold = 1.05 * threshold_soc; // safety factor
   const double current_battery_soc = _context->current_battery_soc();
 
   const auto& parameters = task_planner->configuration().parameters();
