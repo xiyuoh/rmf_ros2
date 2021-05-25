@@ -34,7 +34,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
   std::condition_variable received_requests_cv;
   std::list<LiftRequest> received_requests;
   std::string session_id;
-  auto rcl_subscription = ros_node->create_subscription<LiftRequest>(
+  auto rcl_subscription = data->ros_node->create_subscription<LiftRequest>(
     AdapterLiftRequestTopicName,
     10,
     [&](LiftRequest::UniquePtr lift_request)
@@ -67,7 +67,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     {
       bool received_open = false;
       rxcpp::composite_subscription rx_sub;
-      auto subscription = adapter->node()->create_subscription<LiftRequest>(
+      auto subscription = data->adapter->node()->create_subscription<LiftRequest>(
         AdapterLiftRequestTopicName,
         10,
         [&](LiftRequest::UniquePtr lift_request)
@@ -123,7 +123,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
 
     AND_WHEN("lift is on destination floor")
     {
-      auto lift_state_pub = ros_node->create_publisher<LiftState>(
+      auto lift_state_pub = data->ros_node->create_publisher<LiftState>(
         LiftStateTopicName, 10);
       rclcpp::TimerBase::SharedPtr timer;
       std::function<void()> publish_lift_state = [&]()
@@ -131,7 +131,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
           std::unique_lock<std::mutex> lk(m);
           LiftState lift_state;
           lift_state.lift_name = lift_name;
-          lift_state.lift_time = ros_node->now();
+          lift_state.lift_time = data->ros_node->now();
           lift_state.motion_state = LiftState::MOTION_STOPPED;
           lift_state.destination_floor = destination;
           lift_state.current_floor = destination;
@@ -139,7 +139,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
           lift_state.door_state = LiftState::DOOR_OPEN;
           lift_state.current_mode = LiftState::MODE_AGV;
           lift_state_pub->publish(lift_state);
-          timer = ros_node->create_wall_timer(std::chrono::milliseconds(
+          timer = data->ros_node->create_wall_timer(std::chrono::milliseconds(
                 100), publish_lift_state);
         };
       publish_lift_state();

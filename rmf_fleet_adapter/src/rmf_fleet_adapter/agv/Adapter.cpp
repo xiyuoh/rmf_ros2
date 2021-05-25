@@ -1,5 +1,4 @@
-/*
- * Copyright (C) 2020 Open Source Robotics Foundation
+/* * Copyright (C) 2020 Open Source Robotics Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +29,8 @@
 #include "internal_EasyTrafficLight.hpp"
 
 #include "../load_param.hpp"
+
+#include <rmf_traffic/debug/Plumber.hpp>
 
 namespace rmf_fleet_adapter {
 namespace agv {

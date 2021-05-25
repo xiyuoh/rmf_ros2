@@ -108,6 +108,8 @@ public:
     NegotiateServiceMap _negotiate_services;
 
     std::shared_ptr<void> _negotiator_license;
+
+    CHECK_LEAK("GoToPlace");
   };
 
   class Pending : public Task::PendingPhase

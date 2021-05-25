@@ -35,7 +35,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
   std::mutex m;
   std::condition_variable received_requests_cv;
   std::list<IngestorRequest> received_requests;
-  auto rcl_subscription = adapter->node()->create_subscription<IngestorRequest>(
+  auto rcl_subscription = data->adapter->node()->create_subscription<IngestorRequest>(
     IngestorRequestTopicName,
     10,
     [&](IngestorRequest::UniquePtr ingestor_request)
@@ -60,7 +60,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
   const auto& context = info.context;
 
   auto dispenser_request_pub =
-    adapter->node()->create_publisher<IngestorRequest>(
+    data->adapter->node()->create_publisher<IngestorRequest>(
     IngestorRequestTopicName, 10);
   auto pending_phase = std::make_shared<IngestItem::PendingPhase>(
     context,
@@ -124,24 +124,24 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
 
     AND_WHEN("ingestor result is success")
     {
-      auto result_pub = ros_node->create_publisher<IngestorResult>(
+      auto result_pub = data->ros_node->create_publisher<IngestorResult>(
         IngestorResultTopicName, 10);
-      auto state_pub = ros_node->create_publisher<IngestorState>(
+      auto state_pub = data->ros_node->create_publisher<IngestorState>(
         IngestorStateTopicName, 10);
       auto timer =
-        ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
+        data->ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
           {
             std::unique_lock<std::mutex> lk(m);
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::SUCCESS;
-            result.time = ros_node->now();
+            result.time = data->ros_node->now();
             result_pub->publish(result);
 
             IngestorState state;
             state.guid = request_guid;
             state.mode = IngestorState::IDLE;
-            state.time = ros_node->now();
+            state.time = data->ros_node->now();
             state_pub->publish(state);
           });
 
@@ -161,24 +161,24 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
 
     AND_WHEN("ingestor result is failed")
     {
-      auto result_pub = ros_node->create_publisher<IngestorResult>(
+      auto result_pub = data->ros_node->create_publisher<IngestorResult>(
         IngestorResultTopicName, 10);
-      auto state_pub = ros_node->create_publisher<IngestorState>(
+      auto state_pub = data->ros_node->create_publisher<IngestorState>(
         IngestorStateTopicName, 10);
       auto timer =
-        ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
+        data->ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
           {
             std::unique_lock<std::mutex> lk(m);
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::FAILED;
-            result.time = ros_node->now();
+            result.time = data->ros_node->now();
             result_pub->publish(result);
 
             IngestorState state;
             state.guid = request_guid;
             state.mode = IngestorState::IDLE;
-            state.time = ros_node->now();
+            state.time = data->ros_node->now();
             state_pub->publish(state);
           });
 
@@ -199,9 +199,9 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
 
     AND_WHEN("request is acknowledged and request is no longer in queue")
     {
-      auto result_pub = ros_node->create_publisher<IngestorResult>(
+      auto result_pub = data->ros_node->create_publisher<IngestorResult>(
         IngestorResultTopicName, 10);
-      auto state_pub = ros_node->create_publisher<IngestorState>(
+      auto state_pub = data->ros_node->create_publisher<IngestorState>(
         IngestorStateTopicName, 10);
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
@@ -211,11 +211,11 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::ACKNOWLEDGED;
-            result.time = ros_node->now();
+            result.time = data->ros_node->now();
             result_pub->publish(result);
 
             IngestorState state;
-            state.time = ros_node->now();
+            state.time = data->ros_node->now();
             state.guid = target;
             state.mode = IngestorState::BUSY;
             state_pub->publish(state);
@@ -237,9 +237,9 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
 
     AND_WHEN("request acknowledged result arrives before request state in queue")
     {
-      auto result_pub = ros_node->create_publisher<IngestorResult>(
+      auto result_pub = data->ros_node->create_publisher<IngestorResult>(
         IngestorResultTopicName, 10);
-      auto state_pub = ros_node->create_publisher<IngestorState>(
+      auto state_pub = data->ros_node->create_publisher<IngestorState>(
         IngestorStateTopicName, 10);
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
@@ -249,7 +249,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::ACKNOWLEDGED;
-            result.time = ros_node->now();
+            result.time = data->ros_node->now();
             result_pub->publish(result);
 
             IngestorState state;

@@ -141,7 +141,7 @@ void GoToPlace::Active::respond(
     rmf_rxcpp::make_job<services::Negotiate::Result>(negotiate)
     .observe_on(rxcpp::identity_same_worker(_context->worker()))
     .subscribe(
-    [w = weak_from_this()](const auto& result)
+    [w = weak_from_this(), CAPTURE_LEAK_HERE](const auto& result)
     {
       if (auto phase = w.lock())
       {
@@ -227,7 +227,7 @@ void GoToPlace::Active::find_plan()
     _find_path_service)
     .observe_on(rxcpp::identity_same_worker(_context->worker()))
     .subscribe(
-    [w = weak_from_this()](
+    [w = weak_from_this(), CAPTURE_LEAK_HERE](
       const services::FindPath::Result& result)
     {
       const auto phase = w.lock();
@@ -286,7 +286,7 @@ void GoToPlace::Active::find_emergency_plan()
     services::FindEmergencyPullover::Result>(_pullover_service)
     .observe_on(rxcpp::identity_same_worker(_context->worker()))
     .subscribe(
-    [w = weak_from_this()](
+    [w = weak_from_this(), CAPTURE_LEAK_HERE](
       const services::FindEmergencyPullover::Result& result)
     {
       const auto phase = w.lock();
@@ -564,7 +564,7 @@ void GoToPlace::Active::execute_plan(rmf_traffic::agv::Plan new_plan)
   _status_subscription = _subtasks->observe()
     .observe_on(rxcpp::identity_same_worker(_context->worker()))
     .subscribe(
-    [weak = weak_from_this(), r = _context->name()](const StatusMsg& msg)
+    [weak = weak_from_this(), r = _context->name(), CAPTURE_LEAK_HERE](const StatusMsg& msg)
     {
       if (const auto phase = weak.lock())
         phase->_status_publisher.get_subscriber().on_next(msg);
@@ -606,7 +606,7 @@ std::shared_ptr<Task::ActivePhase> GoToPlace::Pending::begin()
   active->_interrupt_subscription = _context->observe_interrupt()
     .observe_on(rxcpp::identity_same_worker(_context->worker()))
     .subscribe(
-    [a = active->weak_from_this()](const auto&)
+    [a = active->weak_from_this(), CAPTURE_LEAK_HERE](const auto&)
     {
       const auto active = a.lock();
       if (active && !(active->_find_path_service || active->_pullover_service))

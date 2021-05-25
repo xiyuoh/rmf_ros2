@@ -37,7 +37,7 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
   std::mutex m;
   std::condition_variable received_requests_cv;
   std::list<DoorRequest::UniquePtr> received_requests;
-  auto rcl_subscription = adapter->node()->create_subscription<DoorRequest>(
+  auto rcl_subscription = data->adapter->node()->create_subscription<DoorRequest>(
     AdapterDoorRequestTopicName,
     10,
     [&](DoorRequest::UniquePtr door_request)
@@ -98,16 +98,16 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
       }
     }
 
-    auto door_state_pub = ros_node->create_publisher<DoorState>(
+    auto door_state_pub = data->ros_node->create_publisher<DoorState>(
       DoorStateTopicName, 10);
-    auto heartbeat_pub = ros_node->create_publisher<SupervisorHeartbeat>(
+    auto heartbeat_pub = data->ros_node->create_publisher<SupervisorHeartbeat>(
       DoorSupervisorHeartbeatTopicName, 10);
 
     auto publish_door_state = [&](uint32_t mode)
       {
         DoorState door_state;
         door_state.door_name = door_name;
-        door_state.door_time = ros_node->now();
+        door_state.door_time = data->ros_node->now();
         door_state.current_mode.value = mode;
         door_state_pub->publish(door_state);
       };

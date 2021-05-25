@@ -114,6 +114,8 @@ private:
   /// The input task id will be inserted into the registry such that the max
   /// size of the registry is 100.
   void _register_executed_task(const std::string& id);
+
+  CHECK_LEAK("TaskManager");
 };
 
 using TaskManagerPtr = std::shared_ptr<TaskManager>;
