@@ -163,6 +163,7 @@ void TaskManager::set_queue(
   const std::vector<TaskManager::Assignment>& assignments,
   const TaskManager::TaskProfiles& task_profiles)
 {
+  auto profiles = task_profiles;
   // We indent this block as _mutex is also locked in the _begin_next_task()
   // function that is called at the end of this function.
   {
@@ -204,6 +205,17 @@ void TaskManager::set_queue(
           a.state());
 
         _queue.push_back(task);
+
+
+        rmf_task_msgs::msg::TaskProfile profile;
+        rmf_task_msgs::msg::TaskDescription description;
+        profile.task_id = request->id();
+        description.start_time =
+          rmf_traffic_ros2::convert(request->earliest_start_time());
+        description.task_type.type =
+          rmf_task_msgs::msg::TaskType::TYPE_CHARGE_BATTERY;
+        profile.description = description;
+        profiles.insert({request->id(), profile});
       }
 
       else if (std::dynamic_pointer_cast<
@@ -244,10 +256,20 @@ void TaskManager::set_queue(
 
         continue;
       }
-      const auto task_profile_it = task_profiles.find(_queue.back()->id());
-      assert(task_profile_it != task_profiles.end());
-  
-      _queue.back()->task_profile(task_profile_it->second);
+      
+      rmf_task_msgs::msg::TaskProfile profile;
+      const auto task_profile_it = profiles.find(request->id());
+      if (task_profile_it == profiles.end())
+      {
+        RCLCPP_ERROR(_context->node()->get_logger(),
+        "Unable to find TaskProfile for request:[%s]", request->id().c_str());
+      }
+      else
+      {
+        profile = task_profile_it->second;
+      }
+
+      _queue.back()->task_profile(profile);
       // publish queued task
       rmf_task_msgs::msg::TaskSummary msg;
       msg.task_id = _queue.back()->id();
