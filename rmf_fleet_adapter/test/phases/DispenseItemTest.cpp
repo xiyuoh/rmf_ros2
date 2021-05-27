@@ -106,6 +106,7 @@ SCENARIO("dispense item phase", "[phases]")
 
         THEN("it should continuously send dispense item request")
         {
+          // CRASH COUNT: .
           std::unique_lock<std::mutex> lk(m);
           received_requests_cv.wait(lk, [&]()
             {
@@ -194,6 +195,7 @@ SCENARIO("dispense item phase", "[phases]")
 
           THEN("it is failed")
           {
+            // CRASH COUNT: .
             std::unique_lock<std::mutex> lk(m);
             bool failed =
               status_updates_cv.wait_for(lk, std::chrono::milliseconds(
@@ -291,15 +293,6 @@ SCENARIO("dispense item phase", "[phases]")
       std::weak_ptr<rclcpp::Node> weak_node = fixture.data->node;
     }
   }
-
-  while (weak_node.lock())
-  {
-    std::cout << " === waiting" << std::endl;
-  }
-
-//  std::cout << "start wait" << std::endl;
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(200ms);
   std::cout << "EXIT" << std::endl;
 }
 

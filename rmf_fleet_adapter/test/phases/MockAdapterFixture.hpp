@@ -44,15 +44,6 @@ struct MockAdapterFixture
 
     std::shared_ptr<agv::test::MockAdapter> adapter;
     std::shared_ptr<agv::FleetUpdateHandle> fleet;
-
-    ~Data()
-    {
-//      if (adapter)
-//      {
-//        adapter->stop();
-//        rclcpp::shutdown(_context);
-//      }
-    }
   };
 
   std::optional<Data> data;
