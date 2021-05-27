@@ -160,7 +160,8 @@ agv::ConstRobotContextPtr TaskManager::context() const
 
 //==============================================================================
 void TaskManager::set_queue(
-  const std::vector<TaskManager::Assignment>& assignments)
+  const std::vector<TaskManager::Assignment>& assignments,
+  const TaskManager::TaskProfiles& task_profiles)
 {
   // We indent this block as _mutex is also locked in the _begin_next_task()
   // function that is called at the end of this function.
@@ -177,12 +178,10 @@ void TaskManager::set_queue(
       if (i != 0)
         start = assignments[i-1].state().location();
       start.time(a.deployment_time());
-      rmf_task_msgs::msg::TaskType task_type_msg;
       const auto request = a.request();
       if (std::dynamic_pointer_cast<
         const rmf_task::requests::Clean::Description>(request->description()) != nullptr)
       {
-        task_type_msg.type = task_type_msg.TYPE_CLEAN;
         auto task = rmf_fleet_adapter::tasks::make_clean(
           request,
           _context,
@@ -197,7 +196,6 @@ void TaskManager::set_queue(
         const rmf_task::requests::ChargeBattery::Description>(
           request->description()) != nullptr)
       {
-        task_type_msg.type = task_type_msg.TYPE_CHARGE_BATTERY;
         const auto task = tasks::make_charge_battery(
           request,
           _context,
@@ -212,7 +210,6 @@ void TaskManager::set_queue(
         const rmf_task::requests::Delivery::Description>(
           request->description()) != nullptr)
       {
-        task_type_msg.type = task_type_msg.TYPE_DELIVERY;
         const auto task = tasks::make_delivery(
           request,
           _context,
@@ -226,7 +223,6 @@ void TaskManager::set_queue(
       else if (std::dynamic_pointer_cast<
         const rmf_task::requests::Loop::Description>(request->description()) != nullptr)
       {
-        task_type_msg.type = task_type_msg.TYPE_LOOP;
         const auto task = tasks::make_loop(
           request,
           _context,
@@ -248,15 +244,17 @@ void TaskManager::set_queue(
 
         continue;
       }
-
+      const auto task_profile_it = task_profiles.find(_queue.back()->id());
+      assert(task_profile_it != task_profiles.end());
+  
+      _queue.back()->task_profile(task_profile_it->second);
       // publish queued task
       rmf_task_msgs::msg::TaskSummary msg;
       msg.task_id = _queue.back()->id();
-      msg.task_profile.task_id = _queue.back()->id();
+      msg.task_profile = _queue.back()->task_profile();
       msg.state = msg.STATE_QUEUED;
       msg.robot_name = _context->name();
       msg.fleet_name = _context->description().owner();
-      msg.task_profile.description.task_type = task_type_msg;
       msg.start_time = rmf_traffic_ros2::convert(
         _queue.back()->deployment_time());
       msg.end_time = rmf_traffic_ros2::convert(
@@ -335,10 +333,10 @@ void TaskManager::_begin_next_task()
     _task_sub = _active_task->observe()
         .observe_on(rxcpp::identity_same_worker(_context->worker()))
         .subscribe(
-          [this, id = _active_task->id()](Task::StatusMsg msg)
+          [this, profile = _active_task->task_profile()](Task::StatusMsg msg)
     {
-      msg.task_id = id;
-      msg.task_profile.task_id = id;
+      msg.task_id = profile.task_id;
+      msg.task_profile = profile;
       msg.robot_name = _context->name();
       msg.fleet_name = _context->description().owner();
       msg.start_time = rmf_traffic_ros2::convert(
@@ -347,7 +345,7 @@ void TaskManager::_begin_next_task()
         _active_task->finish_state().finish_time());
       _context->node()->task_summary()->publish(msg);
     },
-          [this, id = _active_task->id()](std::exception_ptr e)
+          [this, profile = _active_task->task_profile()](std::exception_ptr e)
     {
       rmf_task_msgs::msg::TaskSummary msg;
       msg.state = msg.STATE_FAILED;
@@ -359,8 +357,8 @@ void TaskManager::_begin_next_task()
         msg.status = e.what();
       }
 
-      msg.task_id = id;
-      msg.task_profile.task_id = id;
+      msg.task_id = profile.task_id;
+      msg.task_profile = profile;
       msg.robot_name = _context->name();
       msg.fleet_name = _context->description().owner();
       msg.start_time = rmf_traffic_ros2::convert(
@@ -369,11 +367,11 @@ void TaskManager::_begin_next_task()
         _active_task->finish_state().finish_time());
       _context->node()->task_summary()->publish(msg);
     },
-          [this, id = _active_task->id()]()
+          [this, profile = _active_task->task_profile()]()
     {
       rmf_task_msgs::msg::TaskSummary msg;
-      msg.task_id = id;
-      msg.task_profile.task_id = id;
+      msg.task_id = profile.task_id;
+      msg.task_profile = profile;
       msg.state = msg.STATE_COMPLETED;
       msg.robot_name = _context->name();
       msg.fleet_name = _context->description().owner();
@@ -552,7 +550,17 @@ void TaskManager::retreat_to_charger()
       finish.value().finish_state(),
       current_state.finish_time());
 
-    set_queue({charging_assignment});
+    TaskProfiles task_profiles;
+    rmf_task_msgs::msg::TaskProfile profile;
+    rmf_task_msgs::msg::TaskDescription description;
+    profile.task_id = charging_request->id();
+    description.start_time =
+      rmf_traffic_ros2::convert(charging_request->earliest_start_time());
+    description.task_type.type =
+      rmf_task_msgs::msg::TaskType::TYPE_CHARGE_BATTERY;
+    profile.description = description;
+    task_profiles.insert({charging_request->id(), profile});
+    set_queue({charging_assignment}, task_profiles);
 
     RCLCPP_INFO(
       _context->node()->get_logger(),

@@ -24,6 +24,7 @@
 #include <rmf_task_msgs/msg/bid_notice.hpp>
 #include <rmf_task_msgs/msg/dispatch_request.hpp>
 #include <rmf_task_msgs/msg/dispatch_ack.hpp>
+#include <rmf_task_msgs/msg/task_profile.hpp>
 
 #include <rmf_task/agv/TaskPlanner.hpp>
 #include <rmf_task/Request.hpp>
@@ -174,6 +175,8 @@ public:
     std::string, rmf_task::ConstRequestPtr> assigned_requests = {};
   std::unordered_set<std::string> cancelled_task_ids = {};
 
+  std::unordered_map<std::string, rmf_task_msgs::msg::TaskProfile> task_profile_map = {};
+  
   AcceptTaskRequest accept_task = nullptr;
 
   using BidNotice = rmf_task_msgs::msg::BidNotice;

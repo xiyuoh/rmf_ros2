@@ -25,6 +25,7 @@
 #include <rmf_traffic/Time.hpp>
 
 #include <rmf_task_msgs/msg/task_summary.hpp>
+#include <rmf_task_msgs/msg/task_profile.hpp>
 
 #include <rmf_task/Request.hpp>
 #include <rmf_task/agv/State.hpp>
@@ -40,7 +41,7 @@ class Task : public std::enable_shared_from_this<Task>
 public:
 
   using StatusMsg = rmf_task_msgs::msg::TaskSummary;
-
+  using ProfileMsg = rmf_task_msgs::msg::TaskProfile;
   /// This class represents the active phase of a Task. It provides an
   /// observable that the Task can track to stay up-to-date on the status and to
   /// know when to begin the next phase.
@@ -133,6 +134,12 @@ public:
   /// Get the finish state of this Task
   const rmf_task::agv::State finish_state() const;
 
+  /// Set the TaskProfile of this Task
+  Task& task_profile(ProfileMsg task_profile);
+
+  /// Get the TaskProfile of this Task
+  const ProfileMsg task_profile() const;
+
 private:
 
   Task(
@@ -162,6 +169,7 @@ private:
   rmf_traffic::Time _deployment_time;
   rmf_task::agv::State _finish_state;
   rmf_task::ConstRequestPtr _request;
+  ProfileMsg _task_profile;
 
   void _start_next_phase();
 

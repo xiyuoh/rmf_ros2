@@ -597,10 +597,12 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
       // rxcpp worker. Hence, no new tasks would have started during this replanning.
     }
 
+    task_profile_map.insert({id, msg->task_profile});
+
     std::size_t index = 0;
     for (auto& t : task_managers)
     {
-      t.second->set_queue(assignments[index]);
+      t.second->set_queue(assignments[index], task_profile_map);
       ++index;
     }
 
@@ -687,7 +689,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
     std::size_t index = 0;
     for (auto& t : task_managers)
     {
-      t.second->set_queue(assignments[index]);
+      t.second->set_queue(assignments[index], task_profile_map);
       ++index;
     }
 

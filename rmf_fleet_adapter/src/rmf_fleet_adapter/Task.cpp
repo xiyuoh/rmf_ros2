@@ -108,6 +108,19 @@ const rmf_task::agv::State Task::finish_state() const
 }
 
 //==============================================================================
+const Task::ProfileMsg Task::task_profile() const
+{
+  return _task_profile;
+}
+
+//==============================================================================
+auto Task::task_profile(Task::ProfileMsg task_profile) -> Task&
+{
+  _task_profile = task_profile;
+  return *this;
+}
+
+//==============================================================================
 Task::Task(
     std::string id,
     std::vector<std::unique_ptr<PendingPhase>> phases,
