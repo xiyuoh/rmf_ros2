@@ -403,6 +403,11 @@ public:
 
     // destroy prev status ptr and recreate one
     auto status = std::make_shared<TaskStatus>(*terminate_status);
+
+    // HACK: publish completion to filtered task summary
+    filtered_task_summaries_pub->publish(
+        rmf_task_ros2::convert_status(*status));
+
     (terminal_dispatch_tasks)[id] = status;
     active_dispatch_tasks.erase(id);
   }
