@@ -50,6 +50,11 @@ public:
   using ActiveTasksPub = rclcpp::Publisher<TasksMsg>;
   ActiveTasksPub::SharedPtr active_tasks_pub;
 
+  // Hack
+  using TaskSummary = rmf_task_msgs::msg::TaskSummary;
+  using TaskSummaryPub = rclcpp::Publisher<TaskSummary>;
+  TaskSummaryPub::SharedPtr filtered_task_summaries_pub;
+
   rclcpp::TimerBase::SharedPtr timer;
 
   StatusCallback on_change_fn;
@@ -95,16 +100,22 @@ public:
     active_tasks_pub = node->create_publisher<TasksMsg>(
       rmf_task_ros2::ActiveTasksTopicName, qos);
 
+    filtered_task_summaries_pub = node->create_publisher<TaskSummary>(
+      rmf_task_ros2::FilteredTaskStatusTopicName, qos);
+
     timer = node->create_wall_timer(
         std::chrono::seconds(publish_active_tasks_period), [&]()
       {
         TasksMsg task_msgs; 
         for (auto task : (this->active_dispatch_tasks))
         {
-          task_msgs.tasks.push_back(
+          // task_msgs.tasks.push_back(
+          //   rmf_task_ros2::convert_status(*(task.second)));
+          filtered_task_summaries_pub->publish(
             rmf_task_ros2::convert_status(*(task.second)));
         }
-        active_tasks_pub->publish(task_msgs);
+        // keep it first
+        // active_tasks_pub->publish(task_msgs);
       });
 
     // Setup up stream srv interfaces
@@ -271,7 +282,13 @@ public:
         (type == rmf_task_msgs::msg::TaskType::TYPE_CHARGE_BATTERY);
 
       if (is_charging_task && is_fleet_name)
+      {
+        // HACK: This is to pub a CANCELED STATUS for self re-assigned task
+        it->second->state = TaskStatus::State::Canceled;
+        filtered_task_summaries_pub->publish(
+          rmf_task_ros2::convert_status(*(it->second)));
         it = active_dispatch_tasks.erase(it);
+      }
       else
         ++it;
     }
@@ -343,7 +360,13 @@ public:
         (type == rmf_task_msgs::msg::TaskType::TYPE_CHARGE_BATTERY);
 
       if (is_charging_task && is_fleet_name)
+      {
+        // HACK: This is to pub a CANCELED STATUS for self re-assigned task
+        it->second->state = TaskStatus::State::Canceled;
+        filtered_task_summaries_pub->publish(
+          rmf_task_ros2::convert_status(*(it->second)));
         it = active_dispatch_tasks.erase(it);
+      }
       else
         ++it;
     }
