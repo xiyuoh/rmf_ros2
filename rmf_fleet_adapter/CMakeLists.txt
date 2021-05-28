@@ -229,12 +229,14 @@ target_link_libraries(experimental_lift_watchdog
   PRIVATE
     ${rclcpp_LIBRARIES}
     ${rmf_fleet_msgs_LIBRARIES}
+    ${std_msgs_LIBRARIES}
 )
 
 target_include_directories(experimental_lift_watchdog
   PRIVATE
     ${rclcpp_INCLUDE_DIRS}
     ${rmf_fleet_msgs_INCLUDE_DIRS}
+    ${std_msgs_INCLUDE_DIRS}
 )
 
 # -----------------------------------------------------------------------------

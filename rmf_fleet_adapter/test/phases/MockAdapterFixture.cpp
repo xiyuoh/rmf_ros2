@@ -174,7 +174,7 @@ MockAdapterFixture::~MockAdapterFixture()
 
   std::cout << "start wait" << std::endl;
   using namespace std::chrono_literals;
-  std::this_thread::sleep_for(5000ms);
+//  std::this_thread::sleep_for(5000ms);
 }
 
 } // namespace test

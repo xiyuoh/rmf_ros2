@@ -36,6 +36,8 @@
 
 #include <rmf_fleet_msgs/msg/fleet_state.hpp>
 
+#include <rmf_traffic/debug/Plumber.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -112,21 +114,22 @@ private:
     const std::string& node_name,
     const rclcpp::NodeOptions& options);
 
-  DoorStateObs _door_state_obs;
-  DoorSupervisorObs _door_supervisor_obs;
+  Bridge<DoorState> _door_state_obs;
+  Bridge<DoorSupervisorState> _door_supervisor_obs;
   DoorRequestPub _door_request_pub;
-  LiftStateObs _lift_state_obs;
+  Bridge<LiftState> _lift_state_obs;
   LiftRequestPub _lift_request_pub;
   TaskSummaryPub _task_summary_pub;
   DispenserRequestPub _dispenser_request_pub;
-  DispenserResultObs _dispenser_result_obs;
-  DispenserStateObs _dispenser_state_obs;
-  EmergencyNoticeObs _emergency_notice_obs;
+  Bridge<DispenserResult> _dispenser_result_obs;
+  Bridge<DispenserState> _dispenser_state_obs;
+  Bridge<EmergencyNotice> _emergency_notice_obs;
   IngestorRequestPub _ingestor_request_pub;
-  IngestorResultObs _ingestor_result_obs;
-  IngestorStateObs _ingestor_state_obs;
+  Bridge<IngestorResult> _ingestor_result_obs;
+  Bridge<IngestorState> _ingestor_state_obs;
   FleetStatePub _fleet_state_pub;
 
+  CHECK_LEAK("rmf_fleet_adapter::agv::Node");
 };
 
 } // namespace agv

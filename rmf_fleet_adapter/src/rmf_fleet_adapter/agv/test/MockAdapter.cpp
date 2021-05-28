@@ -168,7 +168,8 @@ void MockAdapter::dispatch_task(const rmf_task_msgs::msg::TaskProfile& profile)
 //==============================================================================
 MockAdapter::~MockAdapter()
 {
-  using namespace std::chrono_literals;
+//  using namespace std::chrono_literals;
+//  _pimpl->fleets.clear();
   stop();
 }
 

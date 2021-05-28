@@ -125,13 +125,13 @@ Node::Node(
 //==============================================================================
 auto Node::door_state() const -> const DoorStateObs&
 {
-  return _door_state_obs;
+  return _door_state_obs->observe();
 }
 
 //==============================================================================
 auto Node::door_supervisor() const -> const DoorSupervisorObs&
 {
-  return _door_supervisor_obs;
+  return _door_supervisor_obs->observe();
 }
 
 //==============================================================================
@@ -143,7 +143,7 @@ auto Node::door_request() const -> const DoorRequestPub&
 //==============================================================================
 auto Node::lift_state() const -> const LiftStateObs&
 {
-  return _lift_state_obs;
+  return _lift_state_obs->observe();
 }
 
 //==============================================================================
@@ -167,19 +167,19 @@ auto Node::dispenser_request() const -> const DispenserRequestPub&
 //==============================================================================
 auto Node::dispenser_result() const -> const DispenserResultObs&
 {
-  return _dispenser_result_obs;
+  return _dispenser_result_obs->observe();
 }
 
 //==============================================================================
 auto Node::dispenser_state() const -> const DispenserStateObs&
 {
-  return _dispenser_state_obs;
+  return _dispenser_state_obs->observe();
 }
 
 //==============================================================================
 auto Node::emergency_notice() const -> const EmergencyNoticeObs&
 {
-  return _emergency_notice_obs;
+  return _emergency_notice_obs->observe();
 }
 
 auto Node::ingestor_request() const -> const IngestorRequestPub&
@@ -190,13 +190,13 @@ auto Node::ingestor_request() const -> const IngestorRequestPub&
 //==============================================================================
 auto Node::ingestor_result() const -> const IngestorResultObs&
 {
-  return _ingestor_result_obs;
+  return _ingestor_result_obs->observe();
 }
 
 //==============================================================================
 auto Node::ingestor_state() const -> const IngestorStateObs&
 {
-  return _ingestor_state_obs;
+  return _ingestor_state_obs->observe();
 }
 
 //==============================================================================
