@@ -127,6 +127,7 @@ rclcpp::NodeOptions make_test_node_options()
   return node_options;
 }
 
+//==============================================================================
 class ManagedThread
 {
 public:
@@ -246,23 +247,22 @@ SCENARIO("Test new path timing")
       lock_0, 10000ms,
       [command_0]() { return command_0->current_version.has_value(); });
     REQUIRE(command_0->current_version.has_value());
-    CHECK(path_0.size() == command_0->current_checkpoints.size());
+    CHECK_FALSE(command_0->current_checkpoints.empty());
 
     const auto path_1 = make_path(graph, {7, 6, 5, 8, 10}, 0.0);
     update_1->follow_new_path(path_1);
+
+    std::this_thread::sleep_for(50ms);
+    CHECK_FALSE(command_1->current_version.has_value());
+
+    command_0->standby_cb();
+
     std::unique_lock<std::mutex> lock_1(command_1->mutex);
     command_1->cv.wait_for(
-      lock_1, 100ms,
+      lock_1, 10000ms,
       [command_1]() { return command_1->current_version.has_value(); });
     REQUIRE(command_1->current_version.has_value());
-    CHECK(path_1.size() == command_1->current_checkpoints.size());
-
-    for (std::size_t index : {0, 1, 2})
-    {
-      CHECK(command_1->current_checkpoints[index].departure_time
-        - command_0->current_checkpoints[index].departure_time
-        >= rmf_traffic::agv::Planner::Options::DefaultMinHoldingTime);
-    }
+    CHECK_FALSE(command_1->current_checkpoints.empty());
   }
 }
 
