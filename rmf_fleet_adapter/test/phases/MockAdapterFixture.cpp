@@ -169,7 +169,7 @@ MockAdapterFixture::~MockAdapterFixture()
 
   while (weak_node.lock())
   {
-    std::cout << " === waiting" << std::endl;
+//    std::cout << " === waiting" << std::endl;
   }
 
   std::cout << "start wait" << std::endl;

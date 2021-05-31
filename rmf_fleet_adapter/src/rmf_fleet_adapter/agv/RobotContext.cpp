@@ -329,6 +329,7 @@ RobotContext::RobotContext(
   _current_task_end_state(state),
   _task_planner(std::move(task_planner))
 {
+  std::cout << "making context for: " << _requester_id << std::endl;
   _profile = std::make_shared<rmf_traffic::Profile>(
     _itinerary.description().profile());
 

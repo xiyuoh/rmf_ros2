@@ -192,6 +192,8 @@ private:
 
   RobotUpdateHandle::Unstable::Watchdog _lift_watchdog;
   rmf_traffic::Duration _lift_rewait_duration = std::chrono::seconds(0);
+
+  CHECK_LEAK("RobotContext");
 };
 
 using RobotContextPtr = std::shared_ptr<RobotContext>;

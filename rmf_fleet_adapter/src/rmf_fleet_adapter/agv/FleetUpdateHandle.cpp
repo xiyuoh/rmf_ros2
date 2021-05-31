@@ -1035,6 +1035,19 @@ void FleetUpdateHandle::add_robot(
           fleet->_pimpl->task_planner
         });
 
+//      auto context = std::shared_ptr<RobotContext>(
+//        new RobotContext(
+//          std::move(command),
+//          std::move(start),
+//          std::move(participant),
+//          fleet->_pimpl->snappable,
+//          fleet->_pimpl->planner,
+//          fleet->_pimpl->node,
+//          fleet->_pimpl->worker,
+//          fleet->_pimpl->default_maximum_delay,
+//          state,
+//          fleet->_pimpl->task_planner));
+
       // We schedule the following operations on the worker to make sure we do not
       // have a multiple read/write race condition on the FleetUpdateHandle.
       worker.schedule(
@@ -1059,8 +1072,6 @@ void FleetUpdateHandle::add_robot(
             "Added a robot named [%s] with participant ID [%d]",
             context->name().c_str(), context->itinerary().id());
 
-          fleet->_pimpl->task_managers.insert({context,
-            TaskManager::make(context)});
           if (handle_cb)
           {
             handle_cb(RobotUpdateHandle::Implementation::make(std::move(context)));
@@ -1073,7 +1084,11 @@ void FleetUpdateHandle::add_robot(
               "receive the RobotUpdateHandle of the new robot. This means you will "
               "not be able to update the state of the new robot. This is likely to "
               "be a fleet adapter development error.");
+            return;
           }
+
+          fleet->_pimpl->task_managers.insert({context,
+            TaskManager::make(context)});
         });
     });
 }
