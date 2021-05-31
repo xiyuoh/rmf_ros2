@@ -21,6 +21,7 @@
 #include <rmf_fleet_adapter/agv/Adapter.hpp>
 
 #include <rmf_traffic_ros2/schedule/Node.hpp>
+#include <rmf_traffic_ros2/blockade/Node.hpp>
 
 #include <rmf_traffic/geometry/Circle.hpp>
 #include <rmf_traffic/Profile.hpp>
@@ -126,11 +127,53 @@ rclcpp::NodeOptions make_test_node_options()
   return node_options;
 }
 
+class ManagedThread
+{
+public:
+
+  ManagedThread(
+    std::function<void()> function,
+    rclcpp::Context::SharedPtr context)
+  : _context(std::move(context)),
+    _thread(std::move(function))
+  {
+    // Do nothing
+  }
+
+  ~ManagedThread()
+  {
+    // We need to manually tell the context to shutdown so that the blockade
+    // thread knows to exit.
+    rclcpp::shutdown(_context);
+    if (_thread.joinable())
+      _thread.join();
+  }
+
+private:
+  rclcpp::Context::SharedPtr _context;
+  std::thread _thread;
+};
+
 //==============================================================================
 SCENARIO("Test new path timing")
 {
   rmf_fleet_adapter_test::thread_cooldown = true;
   using namespace std::chrono_literals;
+
+  auto rcl_context = std::make_shared<rclcpp::Context>();
+  rcl_context->init(0, nullptr);
+
+  const auto blockade_node = rmf_traffic_ros2::blockade::make_node(
+    rclcpp::NodeOptions().context(rcl_context));
+  ManagedThread blockade_thread(
+    [blockade_node]()
+    {
+      rclcpp::ExecutorOptions options;
+      options.context = blockade_node->get_node_base_interface()->get_context();
+      rclcpp::executors::SingleThreadedExecutor executor(options);
+      executor.add_node(blockade_node);
+      executor.spin();
+    }, rcl_context);
 
   const auto graph = make_test_graph();
 
@@ -145,8 +188,6 @@ SCENARIO("Test new path timing")
     profile
   };
 
-  auto rcl_context = std::make_shared<rclcpp::Context>();
-  rcl_context->init(0, nullptr);
   rmf_fleet_adapter::agv::test::MockAdapter adapter(
     "test_TrafficLight_" + std::to_string(++node_count),
     rclcpp::NodeOptions().context(rcl_context));
@@ -171,10 +212,10 @@ SCENARIO("Test new path timing")
     update_0->follow_new_path(path_0);
     std::unique_lock<std::mutex> lock_0(command_0->mutex);
     command_0->cv.wait_for(
-      lock_0, 10000ms,
+      lock_0, 1000ms,
       [command_0]() { return command_0->current_version.has_value(); });
     REQUIRE(command_0->current_version.has_value());
-    CHECK(path_0.size() == command_0->current_checkpoints.size());
+    CHECK_FALSE(command_0->current_checkpoints.empty());
 
     const auto path_1 = make_path(graph, {3, 4, 5, 6, 7}, 0.0);
     update_1->follow_new_path(path_1);
@@ -183,21 +224,15 @@ SCENARIO("Test new path timing")
       lock_1, 100ms,
       [command_1]() { return command_1->current_version.has_value(); });
     REQUIRE(command_1->current_version.has_value());
-    CHECK(path_1.size() == command_1->current_checkpoints.size());
+    CHECK_FALSE(command_1->current_checkpoints.empty());
 
-    REQUIRE(command_0->current_checkpoints.size()
-      == command_1->current_checkpoints.size());
+    CHECK(command_0->current_checkpoints.size()
+      != command_1->current_checkpoints.size());
 
-    // They would normally collide at index==2, so from index==2 onwards,
-    // the path of command_1 must be lagging behind the path of command_0 by
-    // at least the planner's default minimum holding time, or else the
-    // planner might not have actually avoided the collision as intended.
-    for (std::size_t i = 2; i < command_0->current_checkpoints.size(); ++i)
-    {
-      CHECK(command_1->current_checkpoints[i].departure_time
-        - command_0->current_checkpoints[i].departure_time
-        >= rmf_traffic::agv::Planner::Options::DefaultMinHoldingTime);
-    }
+    const bool at_least_one_stops_before_index_2 =
+        command_0->current_checkpoints.size() < 2
+        || command_1->current_checkpoints.size() < 2;
+    CHECK(at_least_one_stops_before_index_2);
   }
 
   WHEN("Sharing a lane")
