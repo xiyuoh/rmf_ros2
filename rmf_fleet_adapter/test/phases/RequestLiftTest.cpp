@@ -39,6 +39,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     10,
     [&](LiftRequest::UniquePtr lift_request)
     {
+      std::cout << " == RECEIVED A REQUEST" << std::endl;
       std::unique_lock<std::mutex> lk(m);
       session_id = lift_request->session_id;
       received_requests.emplace_back(*lift_request);
@@ -54,7 +55,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     context,
     lift_name,
     destination,
-    rmf_traffic::Time(),
+    context->now() + std::chrono::seconds(5),
     RequestLift::Located::Outside
   );
   auto active_phase = pending_phase->begin();
@@ -100,10 +101,12 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     {
       std::unique_lock<std::mutex> lk(m);
       if (received_requests.empty())
+      {
         received_requests_cv.wait(lk, [&]()
           {
             return !received_requests.empty();
           });
+      }
       CHECK(received_requests.size() == 1);
       CHECK(received_requests.front().destination_floor == destination);
     }

@@ -222,13 +222,8 @@ public:
     profile(std::make_shared<rmf_traffic::Profile>(
         itinerary.description().profile()))
   {
-    fleet_state_pub = node->fleet_state();
-    fleet_state_timer = node->create_wall_timer(
-      std::chrono::seconds(1),
-      [this]()
-      {
-        this->publish_fleet_state();
-      });
+    // Initialized further in
+    // TrafficLight::UpdateHandle::Implementation::Implementation
   }
 };
 
@@ -1884,7 +1879,14 @@ TrafficLight::UpdateHandle::Implementation::Implementation(
       std::move(worker_),
       std::move(node_)))
 {
-  // Do nothing
+  data->fleet_state_pub = data->node->fleet_state();
+  data->fleet_state_timer = data->node->create_wall_timer(
+    std::chrono::seconds(1),
+    [me = data->weak_from_this()]()
+    {
+      if (const auto self = me.lock())
+        self->publish_fleet_state();
+    });
 }
 
 //==============================================================================
@@ -1988,9 +1990,10 @@ auto TrafficLight::UpdateHandle::fleet_state_publish_period(
     _pimpl->data->fleet_state_timer =
       _pimpl->data->node->create_wall_timer(
       value.value(),
-      [self = _pimpl->data.get()]()
+      [me = _pimpl->data->weak_from_this()]()
       {
-        self->publish_fleet_state();
+        if (const auto self = me.lock())
+          self->publish_fleet_state();
       });
   }
   else

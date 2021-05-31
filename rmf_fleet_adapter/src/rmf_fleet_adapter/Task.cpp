@@ -149,6 +149,8 @@ void Task::_start_next_phase()
     return;
   }
 
+//  std::cout << "[" << this << "] Remaining phases: " << _pending_phases.size()
+//            << " | next: " << _pending_phases.back().get() << std::endl;
   _active_phase = _pending_phases.back()->begin();
   _pending_phases.pop_back();
   _active_phase_subscription =

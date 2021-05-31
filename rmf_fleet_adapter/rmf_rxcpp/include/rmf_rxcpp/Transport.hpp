@@ -70,19 +70,19 @@ public:
           }
         });
 
-      {
-        std::unique_lock<std::mutex> lock(_mutex);
-        while (_work_scheduled && keep_spinning())
-        {
-          // If work is already scheduled to be done, wait until there is no
-          // longer any work scheduled (or if we're no longer supposed to keep
-          // spinning).
-          _cv.wait_for(lock, std::chrono::milliseconds(50), [&]()
             {
-              return !_work_scheduled || !keep_spinning();
-            });
-        }
-      }
+              std::unique_lock<std::mutex> lock(_mutex);
+              while (_work_scheduled && keep_spinning())
+              {
+                // If work is already scheduled to be done, wait until there is no
+                // longer any work scheduled (or if we're no longer supposed to keep
+                // spinning).
+                _cv.wait_for(lock, std::chrono::milliseconds(50), [&]()
+                  {
+                    return !_work_scheduled || !keep_spinning();
+                  });
+              }
+            }
 
       // TODO(MXG): It would be better if we could check whether work is really
       // available before we keep looping. Or if we could interrupt an

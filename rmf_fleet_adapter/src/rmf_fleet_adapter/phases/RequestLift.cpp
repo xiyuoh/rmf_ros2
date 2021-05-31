@@ -119,7 +119,7 @@ void RequestLift::ActivePhase::_init_obs()
             me->_do_publish();
 
             const auto current_expected_finish =
-            me->_expected_finish + me->_context->itinerary().delay();
+              me->_expected_finish + me->_context->itinerary().delay();
 
             const auto delay = me->_context->now() - current_expected_finish;
             if (delay > std::chrono::seconds(0))
@@ -308,6 +308,7 @@ void RequestLift::ActivePhase::_do_publish()
   msg.request_time = _context->node()->now();
   msg.request_type = rmf_lift_msgs::msg::LiftRequest::REQUEST_AGV_MODE;
   msg.door_state = rmf_lift_msgs::msg::LiftRequest::DOOR_OPEN;
+
   _context->node()->lift_request()->publish(msg);
 }
 

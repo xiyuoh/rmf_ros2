@@ -171,7 +171,7 @@ SCENARIO("Test new path timing")
     update_0->follow_new_path(path_0);
     std::unique_lock<std::mutex> lock_0(command_0->mutex);
     command_0->cv.wait_for(
-      lock_0, 100ms,
+      lock_0, 10000ms,
       [command_0]() { return command_0->current_version.has_value(); });
     REQUIRE(command_0->current_version.has_value());
     CHECK(path_0.size() == command_0->current_checkpoints.size());
@@ -208,7 +208,7 @@ SCENARIO("Test new path timing")
     update_0->follow_new_path(path_0);
     std::unique_lock<std::mutex> lock_0(command_0->mutex);
     command_0->cv.wait_for(
-      lock_0, 100ms,
+      lock_0, 10000ms,
       [command_0]() { return command_0->current_version.has_value(); });
     REQUIRE(command_0->current_version.has_value());
     CHECK(path_0.size() == command_0->current_checkpoints.size());

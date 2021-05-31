@@ -24,6 +24,8 @@
 
 #include <condition_variable>
 
+#include <iostream>
+
 namespace rmf_fleet_adapter_test {
 
 //==============================================================================
@@ -39,6 +41,7 @@ public:
     std::function<void()> on_standby,
     Reject)
   {
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     std::lock_guard<std::mutex> lock(mutex);
     current_version = version;
     current_checkpoints = std::move(checkpoints);

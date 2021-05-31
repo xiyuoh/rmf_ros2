@@ -168,6 +168,8 @@ private:
   void _start_next_phase();
 
   StatusMsg _process_summary(const StatusMsg& input_msg);
+
+  CHECK_LEAK("Task");
 };
 
 }
