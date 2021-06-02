@@ -157,22 +157,22 @@ void Task::_start_next_phase()
 
 //  std::cout << "[plumber:" << _plumber << "] Remaining phases: " << _pending_phases.size()
 //            << " | next: " << _pending_phases.back().get() << std::endl;
-  std::size_t total_phases = _pending_phases.size();
-  auto* const next_phase = _pending_phases.back().get();
-  _active_phase = _pending_phases.back()->begin();
-  auto* const next_phase_again = _pending_phases.back().get();
-  _pending_phases.pop_back();
-
-//  std::unique_ptr<PendingPhase> next_pending =
-//    std::move(_pending_phases.back());
+//  std::size_t total_phases = _pending_phases.size();
+//  auto* const next_phase = _pending_phases.back().get();
+//  _active_phase = _pending_phases.back()->begin();
+//  auto* const next_phase_again = _pending_phases.back().get();
 //  _pending_phases.pop_back();
 
-//  if (!next_pending)
-//  {
-//    throw std::runtime_error(
-//      "[Task::_start_next_phase] INTERNAL ERROR: Next phase has a null value");
-//  }
-//  _active_phase = next_pending->begin();
+  std::unique_ptr<PendingPhase> next_pending =
+    std::move(_pending_phases.back());
+  _pending_phases.pop_back();
+
+  if (!next_pending)
+  {
+    throw std::runtime_error(
+      "[Task::_start_next_phase] INTERNAL ERROR: Next phase has a null value");
+  }
+  _active_phase = next_pending->begin();
 
   _active_phase_subscription =
     _active_phase->observe()

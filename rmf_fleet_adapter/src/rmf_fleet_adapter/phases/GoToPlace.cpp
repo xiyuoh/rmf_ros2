@@ -153,7 +153,9 @@ void GoToPlace::Active::respond(
         // We need to make sure we respond in some way so that we don't risk
         // making a negotiation hang forever. If this task is dead, then we should
         // at least respond by forfeiting.
-        result.service->responder()->forfeit({});
+        const auto service = result.service;
+        const auto responder = service->responder();
+        responder->forfeit({});
       }
     });
 

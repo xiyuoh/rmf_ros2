@@ -86,7 +86,7 @@ void Negotiate::operator()(const Subscriber& s)
               [r = *_evaluator.best_result.progress,
               initial_itinerary = std::move(_initial_itinerary),
               approval = std::move(_approval),
-              responder = std::move(_responder)]()
+              responder = _responder]()
               {
                 std::vector<rmf_traffic::Route> final_itinerary;
                 final_itinerary.reserve(
