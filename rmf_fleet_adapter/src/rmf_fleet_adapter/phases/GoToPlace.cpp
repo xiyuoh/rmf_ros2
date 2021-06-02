@@ -615,6 +615,10 @@ std::shared_ptr<Task::ActivePhase> GoToPlace::Pending::begin()
         active->_context->node()->get_logger(),
         "Replanning for [%s] because of an interruption",
         active->_context->requester_id().c_str());
+      RCLCPP_INFO(
+        active->_context->node()->get_logger(),
+        "Pausing before finding a new plan");
+      active->_context->command()->stop();
       active->find_plan();
     }
   });
