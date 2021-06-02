@@ -24,6 +24,7 @@ namespace battery = rmf_battery::agv;
 
 using TimePoint = std::chrono::time_point<std::chrono::system_clock,
                                           std::chrono::nanoseconds>;
+using namespace std::chrono_literals;
 
 void bind_types(py::module &);
 void bind_graph(py::module &);
@@ -117,7 +118,7 @@ PYBIND11_MODULE(rmf_adapter, m) {
              })
         .def("set_infinite_delay",
              [&](agv::RobotUpdateHandle& self){
-                self.maximum_delay(rmf_utils::nullopt);
+                self.maximum_delay(30s);
              })
         .def("get_unstable_participant",
              [&](agv::RobotUpdateHandle& self){
