@@ -178,6 +178,10 @@ public:
     p.name = "docking";
     _current_dock_request.parameters.push_back(std::move(p));
 
+    _current_stop_request.fleet_name = fleet_name;
+    _current_stop_request.robot_name = robot_name;
+    _current_stop_request.mode.mode = _current_stop_request.mode.MODE_PAUSED;
+    
     _travel_info.graph = std::move(graph);
     _travel_info.traits = std::move(traits);
     _travel_info.fleet_name = std::move(fleet_name);
@@ -227,7 +231,12 @@ public:
 
   void stop() final
   {
-    // This is currently not used by the fleet drivers
+    auto lock = _lock();
+   _clear_last_command();
+
+    _current_stop_request.task_id = std::to_string(++_current_task_id);
+    _stop_requested_time = std::chrono::steady_clock::now();
+    _mode_request_pub->publish(_current_stop_request);
   }
 
   class DockFinder : public rmf_traffic::agv::Graph::Lane::Executor
@@ -441,6 +450,23 @@ public:
         }
       }
     }
+    else if (_stop_requested_time.has_value())
+    {
+      if (state.mode.mode == state.mode.MODE_PAUSED)
+      {
+        _stop_requested_time = rmf_utils::nullopt;
+        return;
+      }
+
+      const auto now = std::chrono::steady_clock::now();
+      if (std::chrono::milliseconds(200) < now - _stop_requested_time.value())
+      {
+        // We published the request a while ago, so we'll send it again in
+        // case it got dropped.
+        _stop_requested_time = now;
+        _mode_request_pub->publish(_current_stop_request);
+      }
+    }
     else
     {
       // If we don't have a finishing callback, then the robot is not under our
@@ -555,6 +581,11 @@ private:
   std::chrono::steady_clock::time_point _dock_schedule_time =
     std::chrono::steady_clock::now();
   RequestCompleted _dock_finished_callback;
+  
+  rmf_fleet_msgs::msg::ModeRequest _current_stop_request;
+  rmf_utils::optional<std::chrono::steady_clock::time_point>
+    _stop_requested_time = rmf_utils::nullopt;
+  
   ModeRequestPub _mode_request_pub;
 
   uint32_t _current_task_id = 0;
