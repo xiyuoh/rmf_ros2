@@ -452,20 +452,29 @@ public:
     }
     else if (_stop_requested_time.has_value())
     {
+      const auto now = std::chrono::steady_clock::now();
+      
       if (state.mode.mode == state.mode.MODE_PAUSED)
       {
         _stop_requested_time = rmf_utils::nullopt;
-        estimate_state(_node, state.location, _travel_info);
-        return;
       }
-
-      const auto now = std::chrono::steady_clock::now();
-      if (std::chrono::milliseconds(200) < now - _stop_requested_time.value())
+      else if (std::chrono::milliseconds(200)
+          < now - _stop_requested_time.value())
       {
         // We published the request a while ago, so we'll send it again in
         // case it got dropped.
         _stop_requested_time = now;
         _mode_request_pub->publish(_current_stop_request);
+      }
+
+      if (_travel_info.target_plan_index.has_value())
+      {
+        estimate_midlane_state(
+          state.location,
+          _travel_info.last_known_wp,
+          _travel_info.target_plan_index.value(),
+          _travel_info);
+        return;
       }
 
       estimate_state(_node, state.location, _travel_info);
