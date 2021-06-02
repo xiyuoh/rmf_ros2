@@ -1039,6 +1039,7 @@ void FleetUpdateHandle::add_robot(
         [context, fleet, node = fleet->_pimpl->node,
         handle_cb = std::move(handle_cb)](const auto&)
         {
+          std::cout << "finishing creation of robot context for " << context->requester_id() << std::endl;
           // TODO(MXG): We need to perform this test because we do not currently
           // support the distributed negotiation in unit test environments. We
           // should create an abstract NegotiationRoom interface in rmf_traffic and

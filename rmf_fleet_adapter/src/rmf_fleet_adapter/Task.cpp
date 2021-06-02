@@ -47,6 +47,11 @@ std::shared_ptr<Task> Task::make(
 //==============================================================================
 void Task::begin()
 {
+  if (_begun->fetch_add(1) > 0)
+  {
+    throw std::runtime_error("[Task::begin] DOUBLED BEGIN");
+  }
+
   if (!_active_phase)
     _start_next_phase();
 }
@@ -116,6 +121,7 @@ Task::Task(
   rmf_task::agv::State finish_state,
   rmf_task::ConstRequestPtr request)
 : _id(std::move(id)),
+  _begun(std::make_shared<std::atomic_uint8_t>(0)),
   _pending_phases(std::move(phases)),
   _worker(std::move(worker)),
   _deployment_time(deployment_time),
@@ -149,10 +155,25 @@ void Task::_start_next_phase()
     return;
   }
 
-//  std::cout << "[" << this << "] Remaining phases: " << _pending_phases.size()
+//  std::cout << "[plumber:" << _plumber << "] Remaining phases: " << _pending_phases.size()
 //            << " | next: " << _pending_phases.back().get() << std::endl;
+  std::size_t total_phases = _pending_phases.size();
+  auto* const next_phase = _pending_phases.back().get();
   _active_phase = _pending_phases.back()->begin();
+  auto* const next_phase_again = _pending_phases.back().get();
   _pending_phases.pop_back();
+
+//  std::unique_ptr<PendingPhase> next_pending =
+//    std::move(_pending_phases.back());
+//  _pending_phases.pop_back();
+
+//  if (!next_pending)
+//  {
+//    throw std::runtime_error(
+//      "[Task::_start_next_phase] INTERNAL ERROR: Next phase has a null value");
+//  }
+//  _active_phase = next_pending->begin();
+
   _active_phase_subscription =
     _active_phase->observe()
     .observe_on(rxcpp::identity_same_worker(_worker))
@@ -213,6 +234,9 @@ void Task::_start_next_phase()
       // We have received a completion notice from the phase
       task->_start_next_phase();
     });
+
+//  std::cout << "[plumber:" << _plumber << "] Remaining phases: " << total_phases
+//            << " | next: " << next_phase << std::endl;
 }
 
 //==============================================================================

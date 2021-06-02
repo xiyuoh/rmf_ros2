@@ -148,6 +148,7 @@ auto MockAdapterFixture::add_robot(
     data->adapter->node(), data->graph);
 
   std::promise<bool> robot_added;
+  auto future = robot_added.get_future();
   data->fleet->add_robot(info.command, name, profile, starts,
     [&info, &robot_added](rmf_fleet_adapter::agv::RobotUpdateHandlePtr updater)
     {
@@ -156,7 +157,7 @@ auto MockAdapterFixture::add_robot(
       info.command->updater = updater;
       robot_added.set_value(true);
     });
-  robot_added.get_future().wait();
+  future.wait();
 
   return info;
 }
@@ -167,12 +168,11 @@ MockAdapterFixture::~MockAdapterFixture()
   std::weak_ptr<rclcpp::Node> weak_node = data->node;
   data.reset();
 
-  while (weak_node.lock())
+  while (const auto node = weak_node.lock())
   {
-//    std::cout << " === waiting" << std::endl;
+    std::cout << " === waiting: " << node.use_count() << std::endl;
   }
 
-  std::cout << "start wait" << std::endl;
   using namespace std::chrono_literals;
 //  std::this_thread::sleep_for(5000ms);
 }

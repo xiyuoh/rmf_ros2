@@ -20,6 +20,8 @@
 
 #include "../jobs/SearchForPath.hpp"
 
+#include <rmf_traffic/debug/Plumber.hpp>
+
 namespace rmf_fleet_adapter {
 namespace services {
 
@@ -48,6 +50,7 @@ public:
 private:
   std::shared_ptr<jobs::SearchForPath> _search_job;
   rmf_rxcpp::subscription_guard _search_sub;
+  CHECK_LEAK("FindPath");
 };
 
 } // namespace services

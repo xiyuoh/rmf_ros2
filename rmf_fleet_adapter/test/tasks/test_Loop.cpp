@@ -301,7 +301,7 @@ SCENARIO("Test loop requests")
   task_profile.description.loop.finish_name = east;
   adapter.dispatch_task(task_profile);
 
-  const auto task_0_completed_status = task_0_completed_future.wait_for(20s);
+  const auto task_0_completed_status = task_0_completed_future.wait_for(400s);
   CHECK(task_0_completed_status == std::future_status::ready);
   CHECK(at_least_one_incomplete_task_0);
   if (task_0_completed_status != std::future_status::ready)
@@ -311,7 +311,7 @@ SCENARIO("Test loop requests")
               << std::endl;
   }
 
-  const auto task_1_completed_status = task_1_completed_future.wait_for(20s);
+  const auto task_1_completed_status = task_1_completed_future.wait_for(400s);
   CHECK(task_1_completed_status == std::future_status::ready);
   CHECK(at_least_one_incomplete_task_1);
   if (task_1_completed_status != std::future_status::ready)
