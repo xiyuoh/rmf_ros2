@@ -455,6 +455,7 @@ public:
       if (state.mode.mode == state.mode.MODE_PAUSED)
       {
         _stop_requested_time = rmf_utils::nullopt;
+        estimate_state(_node, state.location, _travel_info);
         return;
       }
 
@@ -466,6 +467,8 @@ public:
         _stop_requested_time = now;
         _mode_request_pub->publish(_current_stop_request);
       }
+
+      estimate_state(_node, state.location, _travel_info);
     }
     else
     {
