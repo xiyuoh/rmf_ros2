@@ -983,6 +983,7 @@ void FleetUpdateHandle::add_robot(
     rmf_traffic::schedule::ParticipantDescription::Rx::Responsive,
     profile);
 
+  std::cout << "Async making participant" << std::endl;
   _pimpl->writer->async_make_participant(
     std::move(description),
     [worker = _pimpl->worker,
@@ -1035,6 +1036,7 @@ void FleetUpdateHandle::add_robot(
 
       // We schedule the following operations on the worker to make sure we do not
       // have a multiple read/write race condition on the FleetUpdateHandle.
+      std::cout << "scheduling the final creation of robot context for " << context->requester_id() << std::endl;
       worker.schedule(
         [context, fleet, node = fleet->_pimpl->node,
         handle_cb = std::move(handle_cb)](const auto&)
@@ -1060,6 +1062,7 @@ void FleetUpdateHandle::add_robot(
 
           if (handle_cb)
           {
+            std::cout << "Triggering handle update receiver callback" << std::endl;
             handle_cb(RobotUpdateHandle::Implementation::make(std::move(context)));
           }
           else
@@ -1075,6 +1078,7 @@ void FleetUpdateHandle::add_robot(
 
           fleet->_pimpl->task_managers.insert({context,
             TaskManager::make(context)});
+          std::cout << "Exiting creation of robot context" << std::endl;
         });
     });
 }

@@ -152,10 +152,13 @@ auto MockAdapterFixture::add_robot(
   data->fleet->add_robot(info.command, name, profile, starts,
     [&info, &robot_added](rmf_fleet_adapter::agv::RobotUpdateHandlePtr updater)
     {
+      std::cout << "Calling update handle receiver" << std::endl;
       const auto& pimpl = agv::RobotUpdateHandle::Implementation::get(*updater);
       info.context = pimpl.context.lock();
       info.command->updater = updater;
+      std::cout << "Setting promise" << std::endl;
       robot_added.set_value(true);
+      std::cout << "Promise is set" << std::endl;
     });
   future.wait();
 

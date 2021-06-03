@@ -20,6 +20,8 @@
 
 #include "../Planning.hpp"
 
+#include <rmf_traffic/debug/Plumber.hpp>
+
 namespace rmf_fleet_adapter {
 namespace jobs {
 
