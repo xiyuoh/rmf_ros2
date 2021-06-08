@@ -72,8 +72,6 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
 
   WHEN("it is cancelled before its started")
   {
-    active_phase->cancel();
-
     THEN("it should not send lift requests")
     {
       bool received_open = false;
@@ -88,7 +86,12 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
           else if (lift_request->request_type == LiftRequest::REQUEST_END_SESSION)
             rx_sub.unsubscribe();
         });
+
       auto obs = active_phase->observe();
+      active_phase->cancel();
+
+      // TODO(MXG): Put an explicit timeout here so this line doesn't hang
+      // forever in the event of a failure.
       obs.as_blocking().subscribe(rx_sub);
       CHECK(!received_open);
     }

@@ -93,11 +93,13 @@ public:
     }
 
     _stopped = true;
+    std::cout << " << Stopped rmf_rxcpp::Transport" << std::endl;
     _stopped_cv.notify_all();
   }
 
   void stop()
   {
+    std::cout << " >> Asking to stop rmf_rxcpp::Transport" << std::endl;
     _stopping = true;
     _cv.notify_all();
   }
