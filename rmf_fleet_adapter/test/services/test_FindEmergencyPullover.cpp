@@ -296,4 +296,6 @@ SCENARIO("Emergency Pullover")
 
     CHECK(at_least_one_conflict);
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }

@@ -30,7 +30,7 @@ std::size_t MockAdapterFixture::Data::_node_counter = 0;
 
 //==============================================================================
 MockAdapterFixture::MockAdapterFixture()
-: data(Data())
+: data(std::make_shared<Data>())
 {
   data->_context = std::make_shared<rclcpp::Context>();
   data->_context->init(0, nullptr);
@@ -147,20 +147,44 @@ auto MockAdapterFixture::add_robot(
   info.command = std::make_shared<rmf_fleet_adapter_test::MockRobotCommand>(
     data->adapter->node(), data->graph);
 
-  std::promise<bool> robot_added;
-  auto future = robot_added.get_future();
-  data->fleet->add_robot(info.command, name, profile, starts,
-    [&info, &robot_added](rmf_fleet_adapter::agv::RobotUpdateHandlePtr updater)
+  bool was_robot_added_yet = false;
+  std::size_t failures_to_add = 0;
+  while (!was_robot_added_yet)
+  {
+    std::promise<bool> robot_added;
+    auto future = robot_added.get_future();
+    data->fleet->add_robot(info.command, name, profile, starts,
+      [&info, &robot_added](rmf_fleet_adapter::agv::RobotUpdateHandlePtr updater)
+      {
+        std::cout << "Calling update handle receiver" << std::endl;
+        const auto& pimpl = agv::RobotUpdateHandle::Implementation::get(*updater);
+        info.context = pimpl.context.lock();
+        info.command->updater = updater;
+        std::cout << "Setting promise" << std::endl;
+        robot_added.set_value(true);
+        std::cout << "Promise is set" << std::endl;
+      });
+
+    if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
     {
-      std::cout << "Calling update handle receiver" << std::endl;
-      const auto& pimpl = agv::RobotUpdateHandle::Implementation::get(*updater);
-      info.context = pimpl.context.lock();
-      info.command->updater = updater;
-      std::cout << "Setting promise" << std::endl;
-      robot_added.set_value(true);
-      std::cout << "Promise is set" << std::endl;
-    });
-  future.wait();
+      was_robot_added_yet = future.get();
+    }
+    else
+    {
+      std::cout << " >>> FAILED TO ADD ROBOT, TRYING AGAIN" << std::endl;
+      ++failures_to_add;
+    }
+
+    if (failures_to_add > 5)
+      break;
+  }
+
+  if (failures_to_add > 0)
+  {
+    std::cout << "Failed to add " << failures_to_add << " times" << std::endl;
+    throw std::runtime_error(
+      "Failed to add " + std::to_string(failures_to_add) + " times");
+  }
 
   return info;
 }
@@ -171,9 +195,14 @@ MockAdapterFixture::~MockAdapterFixture()
   std::weak_ptr<rclcpp::Node> weak_node = data->node;
   data.reset();
 
+  std::size_t wait_count = 0;
   while (const auto node = weak_node.lock())
   {
-    std::cout << " === waiting: " << node.use_count() << std::endl;
+    ++wait_count;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    if (wait_count > 200)
+      throw std::runtime_error("Node is not dying during test teardown");
   }
 
   using namespace std::chrono_literals;

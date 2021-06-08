@@ -46,7 +46,7 @@ struct MockAdapterFixture
     std::shared_ptr<agv::FleetUpdateHandle> fleet;
   };
 
-  std::optional<Data> data;
+  std::shared_ptr<Data> data;
 
   struct RobotInfo
   {

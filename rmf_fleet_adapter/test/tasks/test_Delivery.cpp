@@ -469,4 +469,6 @@ SCENARIO("Test Delivery")
   CHECK(at_least_one_incomplete);
 
   adapter.stop();
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }

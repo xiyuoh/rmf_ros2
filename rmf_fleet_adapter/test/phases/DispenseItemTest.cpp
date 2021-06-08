@@ -30,23 +30,33 @@ using rmf_dispenser_msgs::msg::DispenserRequest;
 using rmf_dispenser_msgs::msg::DispenserRequestItem;
 using rmf_dispenser_msgs::msg::DispenserState;
 
-SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
+namespace {
+struct TestData
 {
-  std::cout << "ENTER" << std::endl;
   std::mutex m;
   std::condition_variable received_requests_cv;
   std::list<DispenserRequest> received_requests;
+
+  std::condition_variable status_updates_cv;
+  std::list<Task::StatusMsg> status_updates;
+};
+} // anonymous namespace
+
+SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
+{
+  std::cout << "ENTER" << std::endl;
+  const auto test = std::make_shared<TestData>();
   auto rcl_subscription =
     data->adapter->node()->create_subscription<DispenserRequest>(
     DispenserRequestTopicName,
     10,
-    [&](DispenserRequest::UniquePtr dispenser_request)
+    [test](DispenserRequest::UniquePtr dispenser_request)
     {
       {
-        std::unique_lock<std::mutex> lk(m);
-        received_requests.emplace_back(*dispenser_request);
+        std::unique_lock<std::mutex> lk(test->m);
+        test->received_requests.emplace_back(*dispenser_request);
       }
-      received_requests_cv.notify_all();
+      test->received_requests_cv.notify_all();
     });
 
   std::string request_guid = "test_guid";
@@ -77,53 +87,51 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
 
   WHEN("it is started")
   {
-    std::condition_variable status_updates_cv;
-    std::list<Task::StatusMsg> status_updates;
     auto sub = active_phase->observe().subscribe(
-      [&](const auto& status)
+      [test](const auto& status)
       {
         {
-          std::unique_lock<std::mutex> lk(m);
-          status_updates.emplace_back(status);
+          std::unique_lock<std::mutex> lk(test->m);
+          test->status_updates.emplace_back(status);
         }
-        status_updates_cv.notify_all();
+        test->status_updates_cv.notify_all();
       });
 
     THEN("it should send dispense item request")
     {
-      std::unique_lock<std::mutex> lk(m);
-      if (received_requests.empty())
-        received_requests_cv.wait(lk, [&]()
+      std::unique_lock<std::mutex> lk(test->m);
+      if (test->received_requests.empty())
+        test->received_requests_cv.wait(lk, [test]()
           {
-            return !received_requests.empty();
+            return !test->received_requests.empty();
           });
-      REQUIRE(received_requests.size() == 1);
+      REQUIRE(test->received_requests.size() == 1);
     }
 
     THEN("it should continuously send dispense item request")
     {
       // CRASH COUNT: ......
-      std::unique_lock<std::mutex> lk(m);
-      received_requests_cv.wait(lk, [&]()
+      std::unique_lock<std::mutex> lk(test->m);
+      test->received_requests_cv.wait(lk, [test]()
         {
-          return received_requests.size() >= 3;
+          return test->received_requests.size() >= 3;
         });
     }
 
     THEN("cancelled, it should not do anything")
     {
       active_phase->cancel();
-      std::unique_lock<std::mutex> lk(m);
+      std::unique_lock<std::mutex> lk(test->m);
 
       bool completed =
-        status_updates_cv.wait_for(lk, std::chrono::seconds(3), [&]()
+        test->status_updates_cv.wait_for(lk, std::chrono::seconds(3), [test]()
           {
-            for (const auto& status : status_updates)
+            for (const auto& status : test->status_updates)
             {
               if (status.state == Task::StatusMsg::STATE_COMPLETED)
                 return true;
             }
-            status_updates.clear();
+            test->status_updates.clear();
             return false;
           });
       CHECK(!completed);
@@ -136,9 +144,11 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto state_pub = data->ros_node->create_publisher<DispenserState>(
         DispenserStateTopicName, 10);
       auto timer =
-        data->ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
+        data->ros_node->create_wall_timer(
+          std::chrono::milliseconds(100),
+          [test, data = data, request_guid, result_pub, state_pub]()
           {
-            std::unique_lock<std::mutex> lk(m);
+            std::unique_lock<std::mutex> lk(test->m);
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::SUCCESS;
@@ -155,11 +165,11 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       THEN("it is completed")
       {
         // Crash count: ..
-        std::unique_lock<std::mutex> lk(m);
-        bool completed = status_updates_cv.wait_for(lk, std::chrono::milliseconds(
-              1000), [&]()
+        std::unique_lock<std::mutex> lk(test->m);
+        bool completed = test->status_updates_cv.wait_for(lk, std::chrono::milliseconds(
+              1000), [test]()
             {
-              return !status_updates.empty() && status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
+              return !test->status_updates.empty() && test->status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
             });
         CHECK(completed);
       }
@@ -174,9 +184,11 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto state_pub = data->ros_node->create_publisher<DispenserState>(
         DispenserStateTopicName, 10);
       auto timer =
-        data->ros_node->create_wall_timer(std::chrono::milliseconds(100), [&]()
+        data->ros_node->create_wall_timer(
+          std::chrono::milliseconds(100),
+          [test, data = data, request_guid, result_pub, state_pub]()
           {
-            std::unique_lock<std::mutex> lk(m);
+            std::unique_lock<std::mutex> lk(test->m);
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::FAILED;
@@ -192,13 +204,12 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
 
       THEN("it is failed")
       {
-        // CRASH COUNT: .........
-        std::unique_lock<std::mutex> lk(m);
+        std::unique_lock<std::mutex> lk(test->m);
         bool failed =
-          status_updates_cv.wait_for(lk, std::chrono::milliseconds(
-              1000), [&]()
+          test->status_updates_cv.wait_for(lk, std::chrono::milliseconds(
+              1000), [test]()
             {
-              return !status_updates.empty() && status_updates.back().state == Task::StatusMsg::STATE_FAILED;
+              return !test->status_updates.empty() && test->status_updates.back().state == Task::StatusMsg::STATE_FAILED;
             });
         CHECK(failed);
       }
@@ -215,7 +226,7 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([&](const auto&)
+        .subscribe([test, data = data, request_guid, result_pub, state_pub, target](const auto&)
           {
             DispenserResult result;
             result.request_guid = request_guid;
@@ -232,11 +243,11 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
 
       THEN("it is completed")
       {
-        std::unique_lock<std::mutex> lk(m);
-        bool completed = status_updates_cv.wait_for(lk, std::chrono::milliseconds(
-              1000), [&]()
+        std::unique_lock<std::mutex> lk(test->m);
+        bool completed = test->status_updates_cv.wait_for(lk, std::chrono::milliseconds(
+              1000), [test]()
             {
-              return status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
+              return test->status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
             });
         CHECK(completed);
       }
@@ -253,7 +264,7 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([&](const auto&)
+        .subscribe([test, data = data, request_guid, result_pub, state_pub, target](const auto&)
           {
             DispenserResult result;
             result.request_guid = request_guid;
@@ -272,11 +283,11 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
 
       THEN("it is not completed")
       {
-        std::unique_lock<std::mutex> lk(m);
-        bool completed = status_updates_cv.wait_for(lk, std::chrono::milliseconds(
-              1000), [&]()
+        std::unique_lock<std::mutex> lk(test->m);
+        bool completed = test->status_updates_cv.wait_for(lk, std::chrono::milliseconds(
+              1000), [test]()
             {
-              return status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
+              return test->status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
             });
         CHECK(!completed);
       }
@@ -287,7 +298,7 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
     sub.unsubscribe();
   }
 
-  std::cout << "EXIT" << std::endl;
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 } // namespace test

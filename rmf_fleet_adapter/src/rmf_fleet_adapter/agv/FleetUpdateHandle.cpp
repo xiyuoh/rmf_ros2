@@ -1039,7 +1039,7 @@ void FleetUpdateHandle::add_robot(
       std::cout << "scheduling the final creation of robot context for " << context->requester_id() << std::endl;
       worker.schedule(
         [context, fleet, node = fleet->_pimpl->node,
-        handle_cb = std::move(handle_cb)](const auto&)
+        handle_cb = std::move(handle_cb), CAPTURE_LEAK_HERE](const auto&)
         {
           std::cout << "finishing creation of robot context for " << context->requester_id() << std::endl;
           // TODO(MXG): We need to perform this test because we do not currently

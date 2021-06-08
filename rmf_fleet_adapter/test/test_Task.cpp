@@ -338,6 +338,7 @@ SCENARIO("Test simple task")
   REQUIRE(completed_future.get());
 
   CHECK(*count == 18);
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 SCENARIO("Test nested task")
@@ -433,4 +434,5 @@ SCENARIO("Test nested task")
   REQUIRE(completed_future.get());
 
   CHECK(*count == 16);
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }

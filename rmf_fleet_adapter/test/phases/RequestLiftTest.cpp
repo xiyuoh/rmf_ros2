@@ -28,22 +28,32 @@ namespace test {
 using rmf_lift_msgs::msg::LiftState;
 using rmf_lift_msgs::msg::LiftRequest;
 
-SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
+namespace {
+struct TestData
 {
   std::mutex m;
   std::condition_variable received_requests_cv;
   std::list<LiftRequest> received_requests;
   std::string session_id;
+
+  std::condition_variable status_updates_cv;
+  std::list<Task::StatusMsg> status_updates;
+};
+} // anonymous namespace
+
+SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
+{
+  const auto test = std::make_shared<TestData>();
   auto rcl_subscription = data->ros_node->create_subscription<LiftRequest>(
     AdapterLiftRequestTopicName,
     10,
-    [&](LiftRequest::UniquePtr lift_request)
+    [test](LiftRequest::UniquePtr lift_request)
     {
       std::cout << " == RECEIVED A REQUEST" << std::endl;
-      std::unique_lock<std::mutex> lk(m);
-      session_id = lift_request->session_id;
-      received_requests.emplace_back(*lift_request);
-      received_requests_cv.notify_all();
+      std::unique_lock<std::mutex> lk(test->m);
+      test->session_id = lift_request->session_id;
+      test->received_requests.emplace_back(*lift_request);
+      test->received_requests_cv.notify_all();
     });
 
   const auto info = add_robot();
@@ -75,8 +85,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
         {
           if (lift_request->request_type != LiftRequest::REQUEST_END_SESSION)
             received_open = true;
-          else if (lift_request->request_type ==
-          LiftRequest::REQUEST_END_SESSION)
+          else if (lift_request->request_type == LiftRequest::REQUEST_END_SESSION)
             rx_sub.unsubscribe();
         });
       auto obs = active_phase->observe();
@@ -87,38 +96,36 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
 
   WHEN("it is started")
   {
-    std::condition_variable status_updates_cv;
-    std::list<Task::StatusMsg> status_updates;
-    auto sub = active_phase->observe().subscribe(
-      [&](const auto& status)
+    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(
+      [test](const auto& status)
       {
-        std::unique_lock<std::mutex> lk(m);
-        status_updates.emplace_back(status);
-        status_updates_cv.notify_all();
+        std::unique_lock<std::mutex> lk(test->m);
+        test->status_updates.emplace_back(status);
+        test->status_updates_cv.notify_all();
       });
 
     THEN("it should send lift request")
     {
-      std::unique_lock<std::mutex> lk(m);
-      if (received_requests.empty())
+      std::unique_lock<std::mutex> lk(test->m);
+      if (test->received_requests.empty())
       {
-        received_requests_cv.wait(lk, [&]()
+        test->received_requests_cv.wait(lk, [&]()
           {
-            return !received_requests.empty();
+            return !test->received_requests.empty();
           });
       }
-      CHECK(received_requests.size() == 1);
-      CHECK(received_requests.front().destination_floor == destination);
+      CHECK(test->received_requests.size() == 1);
+      CHECK(test->received_requests.front().destination_floor == destination);
     }
 
     THEN("it should continuously send lift requests")
     {
-      std::unique_lock<std::mutex> lk(m);
-      received_requests_cv.wait(lk, [&]()
+      std::unique_lock<std::mutex> lk(test->m);
+      test->received_requests_cv.wait(lk, [test]()
         {
-          return received_requests.size() >= 3;
+          return test->received_requests.size() >= 3;
         });
-      for (const auto& lift_request : received_requests)
+      for (const auto& lift_request : test->received_requests)
       {
         CHECK(lift_request.destination_floor == destination);
       }
@@ -128,32 +135,31 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     {
       auto lift_state_pub = data->ros_node->create_publisher<LiftState>(
         LiftStateTopicName, 10);
-      rclcpp::TimerBase::SharedPtr timer;
-      std::function<void()> publish_lift_state = [&]()
-        {
-          std::unique_lock<std::mutex> lk(m);
-          LiftState lift_state;
-          lift_state.lift_name = lift_name;
-          lift_state.lift_time = data->ros_node->now();
-          lift_state.motion_state = LiftState::MOTION_STOPPED;
-          lift_state.destination_floor = destination;
-          lift_state.current_floor = destination;
-          lift_state.session_id = session_id;
-          lift_state.door_state = LiftState::DOOR_OPEN;
-          lift_state.current_mode = LiftState::MODE_AGV;
-          lift_state_pub->publish(lift_state);
-          timer = data->ros_node->create_wall_timer(std::chrono::milliseconds(
-                100), publish_lift_state);
-        };
-      publish_lift_state();
+      rclcpp::TimerBase::SharedPtr timer =
+        data->ros_node->create_wall_timer(
+          std::chrono::milliseconds(100),
+          [test, data = data, lift_name, destination, lift_state_pub]()
+          {
+            std::unique_lock<std::mutex> lk(test->m);
+            LiftState lift_state;
+            lift_state.lift_name = lift_name;
+            lift_state.lift_time = data->ros_node->now();
+            lift_state.motion_state = LiftState::MOTION_STOPPED;
+            lift_state.destination_floor = destination;
+            lift_state.current_floor = destination;
+            lift_state.session_id = test->session_id;
+            lift_state.door_state = LiftState::DOOR_OPEN;
+            lift_state.current_mode = LiftState::MODE_AGV;
+            lift_state_pub->publish(lift_state);
+          });
 
       THEN("it is completed")
       {
-        std::unique_lock<std::mutex> lk(m);
-        bool completed = status_updates_cv.wait_for(lk, std::chrono::milliseconds(
+        std::unique_lock<std::mutex> lk(test->m);
+        bool completed = test->status_updates_cv.wait_for(lk, std::chrono::milliseconds(
               1000), [&]()
             {
-              return status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
+              return test->status_updates.back().state == Task::StatusMsg::STATE_COMPLETED;
             });
         CHECK(completed);
       }
@@ -164,26 +170,26 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
     AND_WHEN("it is cancelled")
     {
       {
-        std::unique_lock<std::mutex> lk(m);
-        received_requests_cv.wait(lk, [&]()
+        std::unique_lock<std::mutex> lk(test->m);
+        test->received_requests_cv.wait(lk, [&]()
           {
-            return !received_requests.empty();
+            return !test->received_requests.empty();
           });
         active_phase->cancel();
       }
 
       THEN("it should send END_SESSION request")
       {
-        std::unique_lock<std::mutex> lk(m);
-        received_requests_cv.wait(lk, [&]()
+        std::unique_lock<std::mutex> lk(test->m);
+        test->received_requests_cv.wait(lk, [&]()
           {
-            return received_requests.back().request_type == LiftRequest::REQUEST_END_SESSION;
+            return test->received_requests.back().request_type == LiftRequest::REQUEST_END_SESSION;
           });
       }
     }
-
-    sub.unsubscribe();
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 } // namespace test

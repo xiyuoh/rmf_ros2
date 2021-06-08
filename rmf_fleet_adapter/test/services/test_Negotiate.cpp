@@ -1040,6 +1040,8 @@ SCENARIO("Test Plan Negotiation Between Two Participants")
 
     CHECK(no_conflicts(p1, p1_itinerary, p2, p2_itinerary));
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 
@@ -1157,6 +1159,8 @@ SCENARIO("Multi-participant negotiation")
   CHECK(no_conflicts(profile, p0_itinerary, profile, p1_itinerary));
   CHECK(no_conflicts(profile, p0_itinerary, profile, p2_itinerary));
   CHECK(no_conflicts(profile, p1_itinerary, profile, p2_itinerary));
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 SCENARIO("A single lane with an alcove holding space")
@@ -1406,6 +1410,8 @@ SCENARIO("A single lane with an alcove holding space")
       }
     }
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 SCENARIO("A single lane with a alternate one way path")
@@ -1563,6 +1569,8 @@ SCENARIO("A single lane with a alternate one way path")
       }
     }
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 SCENARIO("A single lane with a alternate two way path")
@@ -1723,6 +1731,8 @@ SCENARIO("A single lane with a alternate two way path")
       }
     }
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 SCENARIO("A single loop with alcoves at each vertex")
@@ -2007,6 +2017,8 @@ SCENARIO("A single loop with alcoves at each vertex")
       }
     }
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 //==============================================================================
@@ -2614,5 +2626,7 @@ SCENARIO("fan-in-fan-out bottleneck")
       }
     }
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 

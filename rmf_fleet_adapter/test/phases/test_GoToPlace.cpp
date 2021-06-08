@@ -196,6 +196,8 @@ SCENARIO_METHOD(MockAdapterFixture, "go to place negotiation", "[phases]")
   }
 
   CHECK(negotiation->ready());
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 } // namespace test

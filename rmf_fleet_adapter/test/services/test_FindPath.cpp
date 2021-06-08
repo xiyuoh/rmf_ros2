@@ -284,6 +284,8 @@ SCENARIO("Find a path")
 
     CHECK(at_least_one_conflict);
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 //==============================================================================
@@ -351,4 +353,6 @@ SCENARIO("Office map")
   REQUIRE(std::future_status::ready == status_0);
   const auto result_0 = result_0_future.get();
   REQUIRE(result_0.success());
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }

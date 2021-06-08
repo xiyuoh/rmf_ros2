@@ -264,6 +264,8 @@ SCENARIO("Test new path timing")
     REQUIRE(command_1->current_version.has_value());
     CHECK_FALSE(command_1->current_checkpoints.empty());
   }
+
+  std::cout << "EXIT [" << __FILE__ << "]: " << __LINE__ << std::endl;
 }
 
 //==============================================================================
