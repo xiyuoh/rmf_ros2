@@ -64,7 +64,7 @@ void RobotUpdateHandle::update_position(
 {
   if (const auto context = _pimpl->get_context())
   {
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, waypoint, orientation](const auto&)
       {
         context->_location = {
@@ -104,7 +104,7 @@ void RobotUpdateHandle::update_position(
         });
     }
 
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, starts = std::move(starts)](const auto&)
       {
         context->_location = std::move(starts);
@@ -119,7 +119,7 @@ void RobotUpdateHandle::update_position(
 {
   if (const auto& context = _pimpl->get_context())
   {
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, position, waypoint](const auto&)
       {
         context->_location = {
@@ -158,7 +158,7 @@ void RobotUpdateHandle::update_position(
       return;
     }
 
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, starts = std::move(starts)](const auto&)
       {
         context->_location = std::move(starts);
@@ -192,7 +192,7 @@ void RobotUpdateHandle::update_battery_soc(const double battery_soc)
 
   if (const auto context = _pimpl->get_context())
   {
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, battery_soc](const auto&)
       {
         context->current_battery_soc(battery_soc);
@@ -206,7 +206,7 @@ RobotUpdateHandle& RobotUpdateHandle::maximum_delay(
 {
   if (const auto context = _pimpl->get_context())
   {
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, value](const auto&)
       {
         context->maximum_delay(value);
@@ -263,7 +263,7 @@ void RobotUpdateHandle::Unstable::set_lift_entry_watchdog(
 {
   if (const auto context = _pimpl->get_context())
   {
-    context->worker().schedule(
+    context->worker().schedule(HERE,
       [context, watchdog = std::move(watchdog), wait_duration](const auto&)
       {
         context->set_lift_entry_watchdog(watchdog, wait_duration);

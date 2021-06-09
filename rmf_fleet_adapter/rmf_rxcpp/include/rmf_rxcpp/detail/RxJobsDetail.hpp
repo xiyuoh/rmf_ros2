@@ -34,7 +34,7 @@ void schedule_job(
   const rxcpp::schedulers::worker& w,
   typename std::enable_if_t<IsAsyncAction<Action, Subscriber>::value>* = 0)
 {
-  w.schedule(
+  w.schedule(HERE,
     [a, s, w](const auto&)
     {
       if (const auto action = a.lock())
@@ -49,7 +49,7 @@ void schedule_job(
   const rxcpp::schedulers::worker& w,
   typename std::enable_if_t<!IsAsyncAction<Action, Subscriber>::value>* = 0)
 {
-  w.schedule(
+  w.schedule(HERE,
     [a, s](const auto&)
     {
       if (const auto action = a.lock())
@@ -107,7 +107,7 @@ auto make_merged_observable(const ActionsIterable& actions)
         for (const auto& a : actions)
           s.on_next(detail::make_observable<T>(a));
         s.on_completed();
-      }).merge(rxcpp::serialize_event_loop());
+      }).merge(HERE, rxcpp::serialize_event_loop());
 }
 
 } // namespace detail

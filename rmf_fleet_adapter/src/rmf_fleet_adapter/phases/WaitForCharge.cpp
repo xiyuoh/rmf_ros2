@@ -107,8 +107,8 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
     _charge_to_soc * 100.0);
 
   active->_battery_soc_subscription = _context->observe_battery_soc()
-    .observe_on(rxcpp::identity_same_worker(_context->worker()))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
+    .subscribe(HERE,
     [a = active->weak_from_this()](const double battery_soc)
     {
       const auto active = a.lock();

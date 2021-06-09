@@ -111,8 +111,8 @@ void DispenseItem::ActivePhase::_init_obs()
   _obs = node->dispenser_result()
     .start_with(std::shared_ptr<DispenserResult>(nullptr))
     .combine_latest(
-    rxcpp::observe_on_event_loop(),
-    node->dispenser_state().start_with(std::shared_ptr<DispenserState>(nullptr)))
+      rxcpp::observe_on_event_loop(),
+      node->dispenser_state().start_with(std::shared_ptr<DispenserState>(nullptr)))
     .lift<CombinedType>(on_subscribe([weak = weak_from_this(), &node]()
       {
         auto me = weak.lock();

@@ -147,7 +147,7 @@ struct iterate : public source_base<rxu::value_type_t<iterate_traits<Collection>
         if (selectedProducer.empty()) {
             return;
         }
-        controller.schedule(selectedProducer.get());
+        controller.schedule(HERE, selectedProducer.get());
 
     }
 };

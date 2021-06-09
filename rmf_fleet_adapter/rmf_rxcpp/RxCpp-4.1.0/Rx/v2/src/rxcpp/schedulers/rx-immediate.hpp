@@ -34,21 +34,25 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
+        virtual void schedule(const std::string& d, const schedulable& scbl) const override {
             if (scbl.is_subscribed()) {
                 // allow recursion
                 recursion r(true);
-                scbl(r.get_recurse());
+                scbl(d, r.get_recurse());
             }
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const override {
             std::this_thread::sleep_until(when);
             if (scbl.is_subscribed()) {
                 // allow recursion
                 recursion r(true);
-                scbl(r.get_recurse());
+                scbl(d, r.get_recurse());
             }
+        }
+
+        void dump_queue_info() const override {
+          std::cout << "[immediate_worker::dump_queue_info] never has a queue" << std::endl;
         }
     };
 

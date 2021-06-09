@@ -113,8 +113,8 @@ void ResponsiveWait::Active::_begin_movement()
 
   _movement_subscription =
     _movement->observe()
-    .observe_on(rxcpp::identity_same_worker(_info.context->worker()))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_info.context->worker()))
+    .subscribe(HERE,
     [w = weak_from_this()](const StatusMsg& msg)
     {
       const auto me = w.lock();

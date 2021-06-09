@@ -56,8 +56,8 @@ void SearchForPath::operator()(const Subscriber& s, const Worker&)
   }
 
   _greedy_sub = rmf_rxcpp::make_job<Planning::Result>(_greedy_job)
-    .observe_on(rxcpp::identity_same_worker(_worker))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_worker))
+    .subscribe(HERE,
     [weak = weak_from_this(), s](const Planning::Result& result)
     {
       const auto search = weak.lock();
@@ -157,8 +157,8 @@ void SearchForPath::operator()(const Subscriber& s, const Worker&)
     });
 
   _compliant_sub = rmf_rxcpp::make_job<Planning::Result>(_compliant_job)
-    .observe_on(rxcpp::identity_same_worker(_worker))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_worker))
+    .subscribe(HERE,
     [this, s](const Planning::Result& result)
     {
       auto show_greedy = _greedy_finished ?

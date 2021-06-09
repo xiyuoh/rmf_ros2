@@ -111,8 +111,8 @@ void IngestItem::ActivePhase::_init_obs()
   _obs = node->ingestor_result()
     .start_with(std::shared_ptr<IngestorResult>(nullptr))
     .combine_latest(
-    rxcpp::observe_on_event_loop(),
-    node->ingestor_state().start_with(std::shared_ptr<IngestorState>(nullptr)))
+      rxcpp::observe_on_event_loop(),
+      node->ingestor_state().start_with(std::shared_ptr<IngestorState>(nullptr)))
     .lift<CombinedType>(on_subscribe([weak = weak_from_this(), &node]()
       {
         auto me = weak.lock();
@@ -147,7 +147,8 @@ void IngestItem::ActivePhase::_init_obs()
 
         if (me->_timer)
           me->_timer.reset();
-      });
+      })
+      ;
 }
 
 //==============================================================================

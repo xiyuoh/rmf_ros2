@@ -90,7 +90,7 @@ const std::string status_msg_cancelled = "cancelled";
  * @return
  */
 template<typename Observable, typename CancelObservable>
-auto make_cancellable(const Observable& obs, const CancelObservable& cancel_obs)
+auto make_cancellable(const std::string& desc, const Observable& obs, const CancelObservable& cancel_obs)
 {
   auto cancelled_obs = cancel_obs
     .filter([](const auto& b) { return b; })
@@ -102,7 +102,7 @@ auto make_cancellable(const Observable& obs, const CancelObservable& cancel_obs)
         return status;
       });
   return obs
-    .merge(rxcpp::observe_on_event_loop(), cancelled_obs)
+    .merge(desc, rxcpp::observe_on_event_loop(), cancelled_obs)
     .template lift<Task::StatusMsg>(grab_while_active());
 }
 

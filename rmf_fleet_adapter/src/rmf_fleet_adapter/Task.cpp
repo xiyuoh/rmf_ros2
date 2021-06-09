@@ -176,8 +176,8 @@ void Task::_start_next_phase()
 
   _active_phase_subscription =
     _active_phase->observe()
-    .observe_on(rxcpp::identity_same_worker(_worker))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_worker))
+    .subscribe(HERE,
     [w = weak_from_this()](
       const rmf_task_msgs::msg::TaskSummary& msg)
     {

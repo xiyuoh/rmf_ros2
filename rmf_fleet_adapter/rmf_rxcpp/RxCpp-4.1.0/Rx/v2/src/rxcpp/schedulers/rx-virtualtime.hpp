@@ -203,21 +203,21 @@ protected:
     using base::schedule_absolute;
     using base::schedule_relative;
 
-    virtual void schedule_absolute(typename base::absolute when, const schedulable& a) const
+    virtual void schedule_absolute(const std::string& d, typename base::absolute when, const schedulable& a) const override
     {
         // use a separate subscription here so that a's subscription is not affected
         auto run = make_schedulable(
             a.get_worker(),
             composite_subscription(),
-            [a](const schedulable& scbl) {
+            [a, d](const schedulable& scbl) {
                 rxsc::recursion r;
                 r.reset(false);
                 if (scbl.is_subscribed()) {
                     scbl.unsubscribe(); // unsubscribe() run, not a;
-                    a(r.get_recurse());
+                    a(d, r.get_recurse());
                 }
             });
-        q.push(item_type(when, run));
+        q.push(d, item_type(when, run));
     }
 };
 

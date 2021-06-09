@@ -370,8 +370,8 @@ void TrafficLight::UpdateHandle::Implementation::Data::plan_timing(
 
   find_path_subscription = rmf_rxcpp::make_job<services::FindPath::Result>(
     find_path_service)
-    .observe_on(rxcpp::identity_same_worker(worker))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(worker))
+    .subscribe(HERE,
     [w = weak_from_this(),
     version,
     new_path = std::move(new_path),
@@ -1015,7 +1015,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::update_location(
 {
   const auto now = rmf_traffic_ros2::convert(node->now());
 
-  worker.schedule(
+  worker.schedule(HERE,
     [w = weak_from_this(),
     path_version,
     waypoints,
@@ -1105,7 +1105,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::update_stopped_location(
 {
   const auto now = rmf_traffic_ros2::convert(node->now());
 
-  worker.schedule(
+  worker.schedule(HERE,
     [w = weak_from_this(),
     version,
     target_checkpoint,
@@ -1345,7 +1345,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::send_checkpoints(
 
         if (const auto data = w.lock())
         {
-          data->worker.schedule(
+          data->worker.schedule(HERE,
             [w = data->weak_from_this(),
             path_version,
             standby_checkpoint](const auto&)
@@ -1392,7 +1392,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::send_checkpoints(
 
       if (const auto data = w.lock())
       {
-        data->worker.schedule(
+        data->worker.schedule(HERE,
           [w = data->weak_from_this(),
           path_version,
           standby_checkpoint](const auto&)
@@ -1554,7 +1554,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::approve(
   const std::size_t path_version,
   const std::size_t plan_version)
 {
-  worker.schedule(
+  worker.schedule(HERE,
     [w = weak_from_this(),
     path_version,
     plan_version](const auto&)
@@ -1586,7 +1586,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::reject(
   std::size_t actual_last_departed,
   Eigen::Vector3d stopped_location)
 {
-  worker.schedule(
+  worker.schedule(HERE,
     [w = weak_from_this(),
     path_version,
     plan_version,
@@ -1797,8 +1797,8 @@ void TrafficLight::UpdateHandle::Implementation::Negotiator::respond(
 
   auto negotiate_sub =
     rmf_rxcpp::make_job<services::Negotiate::Result>(negotiate)
-    .observe_on(rxcpp::identity_same_worker(data->worker))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(data->worker))
+    .subscribe(HERE,
     [w = data->weak_from_this()](const auto& result)
     {
       if (const auto data = w.lock())
@@ -1924,7 +1924,7 @@ std::size_t TrafficLight::UpdateHandle::follow_new_path(
   }
 
   const std::size_t version = ++_pimpl->received_version;
-  _pimpl->data->worker.schedule(
+  _pimpl->data->worker.schedule(HERE,
     [version, new_path, data = _pimpl->data](const auto&)
     {
       data->update_path(version, new_path);
@@ -1939,7 +1939,8 @@ auto TrafficLight::UpdateHandle::update_idle_location(
   Eigen::Vector3d position) -> UpdateHandle&
 {
   const std::size_t version = ++_pimpl->received_version;
-  _pimpl->data->worker.schedule(
+  std::cout << ">[" << __FILE__ << "]:" << __LINE__ << std::endl;
+  _pimpl->data->worker.schedule(HERE,
     [version, map = std::move(map), position, data = _pimpl->data](const auto&)
     {
       if (rmf_utils::modular(version).less_than(data->processing_version))
@@ -1962,7 +1963,7 @@ auto TrafficLight::UpdateHandle::update_idle_location(
 auto TrafficLight::UpdateHandle::update_battery_soc(double battery_soc)
 -> UpdateHandle&
 {
-  _pimpl->data->worker.schedule(
+  _pimpl->data->worker.schedule(HERE,
     [battery_soc, data = _pimpl->data](const auto&)
     {
       data->current_battery_soc = battery_soc;

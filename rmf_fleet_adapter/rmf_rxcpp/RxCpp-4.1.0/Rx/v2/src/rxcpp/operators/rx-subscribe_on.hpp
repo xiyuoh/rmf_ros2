@@ -116,7 +116,7 @@ struct subscribe_on : public operator_base<T>
         }
         
         state->source_lifetime.add([=](){
-            controller.schedule(selectedDisposer.get());
+            controller.schedule(HERE, selectedDisposer.get());
         });
 
         state->out.add([=](){
@@ -126,7 +126,7 @@ struct subscribe_on : public operator_base<T>
         });
 
         auto producer = [=](const rxsc::schedulable&){
-            state->source.subscribe(state->source_lifetime, state->out);
+            state->source.subscribe(HERE, state->source_lifetime, state->out);
         };
 
         auto selectedProducer = on_exception(
@@ -136,7 +136,7 @@ struct subscribe_on : public operator_base<T>
             return;
         }
 
-        controller.schedule(selectedProducer.get());
+        controller.schedule(HERE, selectedProducer.get());
     }
 private:
     subscribe_on& operator=(subscribe_on o) RXCPP_DELETE;

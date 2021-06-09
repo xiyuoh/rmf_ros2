@@ -70,21 +70,35 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
-            schedule(now(), scbl);
+        virtual void schedule(const std::string& d, const schedulable& scbl) const override {
+            schedule(d, now(), scbl);
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const override {
             if (scbl.is_subscribed()) {
                 auto st = state.lock();
                 std::unique_lock<std::mutex> guard(st->lock);
                 const bool need_earlier_wakeup_notification = st->notify_earlier_wakeup &&
                                                               (st->q.empty() || when < st->q.top().when);
-                st->q.push(detail::run_loop_state::item_type(when, scbl));
+                st->q.push(d, detail::run_loop_state::item_type(when, scbl));
                 st->r.reset(false);
                 if (need_earlier_wakeup_notification) st->notify_earlier_wakeup(when);
                 guard.unlock(); // So we can't get attempt to recursively lock the state
             }
+        }
+
+        void dump_queue_info() const override {
+          auto st = state.lock();
+          if (!st)
+          {
+            std::cout << "[run_loop_scheduler::dump_queue_info] cannot lock state" << std::endl;
+            return;
+          }
+
+          std::unique_lock<std::mutex> guard(st->lock);
+          std::cout << "v[run_loop_scheduler::dump_queue_info]v" << std::endl;
+          st->q.dump();
+          std::cout << "^[run_loop_scheduler::dump_queue_info]^" << std::endl;
         }
     };
 
@@ -188,7 +202,7 @@ public:
         state->q.pop();
         state->r.reset(state->q.empty());
         guard.unlock();
-        what(state->r.get_recurse());
+        what("dispatch", state->r.get_recurse());
     }
 
     scheduler get_scheduler() const {

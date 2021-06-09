@@ -128,6 +128,11 @@ auto MockAdapterFixture::add_robot(
   const std::string& name,
   rmf_utils::optional<rmf_traffic::Profile> input_profile) -> RobotInfo
 {
+  const auto& fleet_impl = rmf_fleet_adapter::agv::FleetUpdateHandle::Implementation::get(*data->fleet);
+  const auto& worker = fleet_impl.worker;
+  std::cout << "Initial worker queue dump:" << std::endl;
+  worker.dump_queue_info();
+
   rmf_traffic::Profile profile =
     [&]() -> rmf_traffic::Profile
     {
@@ -165,13 +170,17 @@ auto MockAdapterFixture::add_robot(
         std::cout << "Promise is set" << std::endl;
       });
 
+    std::cout << "immediate worker dump:" << std::endl;
+    worker.dump_queue_info();
+
     if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
     {
       was_robot_added_yet = future.get();
     }
     else
     {
-      std::cout << " >>> FAILED TO ADD ROBOT, TRYING AGAIN" << std::endl;
+      std::cout << " >>> FAILED TO ADD ROBOT, TRYING AGAIN. Dump:" << std::endl;
+      worker.dump_queue_info();
       ++failures_to_add;
     }
 

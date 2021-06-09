@@ -1037,7 +1037,7 @@ void FleetUpdateHandle::add_robot(
       // We schedule the following operations on the worker to make sure we do not
       // have a multiple read/write race condition on the FleetUpdateHandle.
       std::cout << "scheduling the final creation of robot context for " << context->requester_id() << std::endl;
-      worker.schedule(
+      worker.schedule(HERE,
         [context, fleet, node = fleet->_pimpl->node,
         handle_cb = std::move(handle_cb), CAPTURE_LEAK_HERE](const auto&)
         {
@@ -1080,13 +1080,16 @@ void FleetUpdateHandle::add_robot(
             TaskManager::make(context)});
           std::cout << "Exiting creation of robot context" << std::endl;
         });
+
+      std::cout << "Subsequent worker queue dump:" << std::endl;
+      worker.dump_queue_info();
     });
 }
 
 //==============================================================================
 void FleetUpdateHandle::close_lanes(std::vector<std::size_t> lane_indices)
 {
-  _pimpl->worker.schedule(
+  _pimpl->worker.schedule(HERE,
     [w = weak_from_this(), lane_indices = std::move(lane_indices)](const auto&)
     {
       const auto self = w.lock();
@@ -1126,7 +1129,7 @@ void FleetUpdateHandle::close_lanes(std::vector<std::size_t> lane_indices)
 //==============================================================================
 void FleetUpdateHandle::open_lanes(std::vector<std::size_t> lane_indices)
 {
-  _pimpl->worker.schedule(
+  _pimpl->worker.schedule(HERE,
     [w = weak_from_this(), lane_indices = std::move(lane_indices)](const auto&)
     {
       const auto self = w.lock();

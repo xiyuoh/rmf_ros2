@@ -137,8 +137,8 @@ SCENARIO("Find a path")
     auto path_sub =
       rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
       path_service)
-      .observe_on(rxcpp::observe_on_event_loop())
-      .subscribe(
+      .observe_on(HERE, rxcpp::observe_on_event_loop())
+      .subscribe(HERE,
       [&result_0_promise](const auto& result)
       {
         result_0_promise.set_value(result);
@@ -162,8 +162,8 @@ SCENARIO("Find a path")
     path_sub =
       rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
       path_service)
-      .observe_on(rxcpp::observe_on_event_loop())
-      .subscribe(
+      .observe_on(HERE, rxcpp::observe_on_event_loop())
+      .subscribe(HERE,
       [&pre_result_1_promise](const auto& result)
       {
         pre_result_1_promise.set_value(result);
@@ -201,8 +201,8 @@ SCENARIO("Find a path")
     path_sub =
       rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
       path_service)
-      .observe_on(rxcpp::observe_on_event_loop())
-      .subscribe(
+      .observe_on(HERE, rxcpp::observe_on_event_loop())
+      .subscribe(HERE,
       [&result_1_promise](const auto& result)
       {
         result_1_promise.set_value(result);
@@ -257,8 +257,8 @@ SCENARIO("Find a path")
     auto path_sub =
       rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
       path_service)
-      .observe_on(rxcpp::observe_on_event_loop())
-      .subscribe(
+      .observe_on(HERE, rxcpp::observe_on_event_loop())
+      .subscribe(HERE,
       [&result_1_promise](const auto& result)
       {
         result_1_promise.set_value(result);
@@ -341,8 +341,8 @@ SCENARIO("Office map")
   auto path_sub =
     rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
     path_service)
-    .observe_on(rxcpp::observe_on_event_loop())
-    .subscribe(
+    .observe_on(HERE, rxcpp::observe_on_event_loop())
+    .subscribe(HERE,
     [&result_0_promise](const auto& result)
     {
       result_0_promise.set_value(result);

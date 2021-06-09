@@ -55,7 +55,7 @@ public:
     while (keep_spinning())
     {
       _work_scheduled = true;
-      _worker.schedule([w = weak_from_this()](const auto&)
+      _worker.schedule(HERE, [w = weak_from_this()](const auto&)
         {
           if (const auto& self = w.lock())
           {
@@ -272,7 +272,7 @@ public:
 //          const auto& s)
 //        {
 //          (*wrapper)(s);
-//        }).publish().ref_count().observe_on(rxcpp::observe_on_event_loop());
+//        }).publish().ref_count().observe_on(HERE, rxcpp::observe_on_event_loop());
   }
 
   ~Transport()

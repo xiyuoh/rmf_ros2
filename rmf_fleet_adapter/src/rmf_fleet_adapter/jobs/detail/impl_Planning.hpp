@@ -31,7 +31,7 @@ void Planning::operator()(const Subscriber& s, const Worker& w)
 {
   _resume = [a = weak_from_this(), s, w]()
     {
-      w.schedule([a, s, w](const auto&)
+      w.schedule(HERE, [a, s, w](const auto&)
         {
           if (const auto action = a.lock())
             (*action)(s, w);

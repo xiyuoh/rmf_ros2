@@ -130,7 +130,7 @@ void MoveRobot::Action::operator()(const Subscriber& s)
         || *action->_last_tail_bump + *action->_tail_period < now)
         {
           action->_last_tail_bump = now;
-          action->_context->worker().schedule(
+          action->_context->worker().schedule(HERE,
             [context = action->_context, bump = *action->_tail_period](
               const auto&)
             {
@@ -208,7 +208,8 @@ void MoveRobot::Action::operator()(const Subscriber& s)
 
       if (std::chrono::milliseconds(500).count() < std::abs(new_delay.count()))
       {
-        action->_context->worker().schedule(
+        std::cout << ">[" << __FILE__ << "]:" << __LINE__ << std::endl;
+        action->_context->worker().schedule(HERE,
           [context = action->_context, new_delay](const auto&)
           {
             context->itinerary().delay(new_delay);

@@ -83,7 +83,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
 
   WHEN("it is started")
   {
-    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(
+    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(HERE,
       [test](const auto& status)
       {
         std::unique_lock<std::mutex> lk(test->m);
@@ -218,7 +218,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       rmf_rxcpp::subscription_guard interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([test, request_guid, data = data, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, request_guid, data = data, result_pub, state_pub, target](const auto&)
           {
             IngestorResult result;
             result.request_guid = request_guid;
@@ -254,7 +254,7 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       rmf_rxcpp::subscription_guard interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([test, data = data, request_guid, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, data = data, request_guid, result_pub, state_pub, target](const auto&)
           {
             IngestorResult result;
             result.request_guid = request_guid;

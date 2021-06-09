@@ -14,7 +14,7 @@ SCENARIO("observe_on sample"){
             return v;
         });
     values.
-        observe_on(rxcpp::synchronize_new_thread()).
+        observe_on(HERE, rxcpp::synchronize_new_thread()).
         as_blocking().
         subscribe(
             [](int v){printf("[thread %s] OnNext: %d\n", get_pid().c_str(), v);},

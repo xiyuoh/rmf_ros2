@@ -144,7 +144,7 @@ struct combine_latest : public operator_base<rxu::value_type_t<combine_latest_tr
         state->out.add(innercs);
 
         auto source = on_exception(
-            [&](){return state->coordinator.in(std::get<Index>(state->source));},
+            [&](){return state->coordinator.in(HERE, std::get<Index>(state->source));},
             state->out);
         if (source.empty()) {
             return;
@@ -189,7 +189,7 @@ struct combine_latest : public operator_base<rxu::value_type_t<combine_latest_tr
         if (selectedSink.empty()) {
             return;
         }
-        source->subscribe(std::move(selectedSink.get()));
+        source->subscribe(HERE, std::move(selectedSink.get()));
     }
     template<class State, int... IndexN>
     void subscribe_all(std::shared_ptr<State> state, rxu::values<int, IndexN...>) const {

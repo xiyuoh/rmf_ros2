@@ -124,7 +124,7 @@ void RequestLift::ActivePhase::_init_obs()
             const auto delay = me->_context->now() - current_expected_finish;
             if (delay > std::chrono::seconds(0))
             {
-              me->_context->worker().schedule(
+              me->_context->worker().schedule(HERE,
                 [context = me->_context, delay](const auto&)
                 {
                   context->itinerary().delay(delay);
@@ -177,7 +177,7 @@ void RequestLift::ActivePhase::_init_obs()
               me->_lift_name,
               me->_destination);
 
-            me->_lift_end_phase->observe().subscribe(s);
+            me->_lift_end_phase->observe().subscribe(HERE, s);
           }
         }));
 }
@@ -228,7 +228,7 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
             _lift_end_phase = EndLiftSession::Active::make(
               _context, _lift_name, _destination);
             _reset_session_subscription = _lift_end_phase->observe()
-              .subscribe([](const auto&)
+              .subscribe(HERE, [](const auto&)
                 {
                   // Do nothing
                 });

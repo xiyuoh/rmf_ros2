@@ -49,10 +49,12 @@ struct observe_on
     typedef rxu::decay_t<Coordination> coordination_type;
     typedef typename coordination_type::coordinator_type coordinator_type;
 
+    std::string desc;
     coordination_type coordination;
 
-    observe_on(coordination_type cn)
-        : coordination(std::move(cn))
+    observe_on(const std::string& desc, coordination_type cn)
+        : desc(desc)
+        , coordination(std::move(cn))
     {
     }
 
@@ -80,6 +82,7 @@ struct observe_on
         };
         struct observe_on_state : std::enable_shared_from_this<observe_on_state>
         {
+            std::string desc;
             mutable std::mutex lock;
             mutable queue_type fill_queue;
             mutable queue_type drain_queue;
@@ -88,8 +91,9 @@ struct observe_on
             coordinator_type coordinator;
             dest_type destination;
 
-            observe_on_state(dest_type d, coordinator_type coor, composite_subscription cs)
-                : lifetime(std::move(cs))
+            observe_on_state(const std::string& desc, dest_type d, coordinator_type coor, composite_subscription cs)
+                : desc(desc)
+                , lifetime(std::move(cs))
                 , current(mode::Empty)
                 , coordinator(std::move(coor))
                 , destination(std::move(d))
@@ -171,14 +175,14 @@ struct observe_on
                     RXCPP_UNWIND_AUTO([&](){guard.lock();});
                     guard.unlock();
 
-                    processor.schedule(selectedDrain.get());
+                    processor.schedule(desc, selectedDrain.get());
                 }
             }
         };
         std::shared_ptr<observe_on_state> state;
 
-        observe_on_observer(dest_type d, coordinator_type coor, composite_subscription cs)
-            : state(std::make_shared<observe_on_state>(std::move(d), std::move(coor), std::move(cs)))
+        observe_on_observer(const std::string& desc, dest_type d, coordinator_type coor, composite_subscription cs)
+            : state(std::make_shared<observe_on_state>(desc, std::move(d), std::move(coor), std::move(cs)))
         {
         }
 
@@ -201,11 +205,11 @@ struct observe_on
             state->ensure_processing(guard);
         }
 
-        static subscriber<value_type, observer<value_type, this_type>> make(dest_type d, coordination_type cn, composite_subscription cs = composite_subscription()) {
+        static subscriber<value_type, observer<value_type, this_type>> make(const std::string& desc, dest_type d, coordination_type cn, composite_subscription cs = composite_subscription()) {
             auto coor = cn.create_coordinator(d.get_subscription());
             d.add(cs);
 
-            this_type o(d, std::move(coor), cs);
+            this_type o(desc, d, std::move(coor), cs);
             auto keepAlive = o.state;
             cs.add([=](){
                 std::unique_lock<std::mutex> guard(keepAlive->lock);
@@ -218,8 +222,8 @@ struct observe_on
 
     template<class Subscriber>
     auto operator()(Subscriber dest) const
-        -> decltype(observe_on_observer<decltype(dest.as_dynamic())>::make(dest.as_dynamic(), coordination)) {
-        return      observe_on_observer<decltype(dest.as_dynamic())>::make(dest.as_dynamic(), coordination);
+        -> decltype(observe_on_observer<decltype(dest.as_dynamic())>::make(desc, dest.as_dynamic(), coordination)) {
+        return      observe_on_observer<decltype(dest.as_dynamic())>::make(desc, dest.as_dynamic(), coordination);
     }
 };
 
@@ -244,9 +248,9 @@ struct member_overload<observe_on_tag>
             is_coordination<Coordination>>,
         class SourceValue = rxu::value_type_t<Observable>,
         class ObserveOn = rxo::detail::observe_on<SourceValue, rxu::decay_t<Coordination>>>
-    static auto member(Observable&& o, Coordination&& cn)
-        -> decltype(o.template lift<SourceValue>(ObserveOn(std::forward<Coordination>(cn)))) {
-        return      o.template lift<SourceValue>(ObserveOn(std::forward<Coordination>(cn)));
+    static auto member(Observable&& o, const std::string& desc, Coordination&& cn)
+        -> decltype(o.template lift<SourceValue>(ObserveOn(desc, std::forward<Coordination>(cn)))) {
+        return      o.template lift<SourceValue>(ObserveOn(desc, std::forward<Coordination>(cn)));
     }
 
     template<class... AN>
@@ -283,9 +287,9 @@ class observe_on_one_worker : public coordination_base
             return factory.now();
         }
         template<class Observable>
-        auto in(Observable o) const
-            -> decltype(o.observe_on(coordination)) {
-            return      o.observe_on(coordination);
+        auto in(const std::string& desc, Observable o) const
+            -> decltype(o.observe_on(desc, coordination)) {
+            return      o.observe_on(desc, coordination);
         }
         template<class Subscriber>
         auto out(Subscriber s) const

@@ -65,7 +65,7 @@ public:
       auto responder =
         std::make_shared<Responder>(c, _negotiators, _cv, _mutex, _worker);
 
-      _worker.schedule(
+      _worker.schedule(HERE,
         [negotiator = std::move(n_it),
          viewer = c->viewer(),
          responder = std::move(responder)](const auto&)
@@ -92,7 +92,7 @@ public:
     auto responder =
       std::make_shared<Responder>(parent, _negotiators, _cv, _mutex, _worker);
 
-    _worker.schedule(
+    _worker.schedule(HERE,
       [negotiator = std::move(n_it),
        responder = std::move(responder),
        viewer = parent->viewer()](const auto&)

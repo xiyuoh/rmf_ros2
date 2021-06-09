@@ -77,7 +77,7 @@ public:
             state->r.reset(true);
         }
     }
-    static void push(item_type item) {
+    static void push(const std::string& d, item_type item) {
         auto& state = current_thread_queue();
         if (!state) {
             std::terminate();
@@ -85,7 +85,7 @@ public:
         if (!item.what.is_subscribed()) {
             return;
         }
-        state->q.push(std::move(item));
+        state->q.push(d, std::move(item));
         // disallow recursion
         state->r.reset(false);
     }
@@ -153,12 +153,16 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
-            queue_type::push(queue_type::item_type(now(), scbl));
+        virtual void schedule(const std::string& d, const schedulable& scbl) const override {
+            queue_type::push(d, queue_type::item_type(now(), scbl));
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
-            queue_type::push(queue_type::item_type(when, scbl));
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const override {
+            queue_type::push(d, queue_type::item_type(when, scbl));
+        }
+
+        void dump_queue_info() const override {
+          std::cout << "[derecurser::dump_queue_info] don't know how to dump queue" << std::endl;
         }
     };
 
@@ -179,11 +183,11 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
-            schedule(now(), scbl);
+        virtual void schedule(const std::string& d, const schedulable& scbl) const override {
+            schedule(d, now(), scbl);
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const override {
             if (!scbl.is_subscribed()) {
                 return;
             }
@@ -192,7 +196,7 @@ private:
                 // check ownership
                 if (queue_type::owned()) {
                     // already has an owner - delegate
-                    queue_type::get_worker_interface()->schedule(when, scbl);
+                    queue_type::get_worker_interface()->schedule(d, when, scbl);
                     return;
                 }
 
@@ -207,7 +211,7 @@ private:
             const auto& recursor = queue_type::get_recursion().get_recurse();
             std::this_thread::sleep_until(when);
             if (scbl.is_subscribed()) {
-                scbl(recursor);
+                scbl(d, recursor);
             }
             if (queue_type::empty()) {
                 return;
@@ -224,13 +228,17 @@ private:
                 queue_type::pop();
 
                 if (what.is_subscribed()) {
-                    what(recursor);
+                    what(d, recursor);
                 }
 
                 if (queue_type::empty()) {
                     break;
                 }
             }
+        }
+
+        void dump_queue_info() const override {
+          queue_type::get_worker_interface()->dump_queue_info();
         }
     };
 

@@ -75,7 +75,7 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
 
   WHEN("it is started")
   {
-    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(
+    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(HERE,
       [test](const auto& status)
       {
         std::unique_lock<std::mutex> lk(test->m);
@@ -148,7 +148,7 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
       rmf_rxcpp::subscription_guard sub2 =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe(
+        .subscribe(HERE,
           [test, publish_door_state, publish_empty_heartbeat](const auto&)
           {
             publish_door_state(DoorMode::MODE_CLOSED);
@@ -172,7 +172,7 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
       rmf_rxcpp::subscription_guard sub2 =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([publish_door_state, publish_empty_heartbeat](const auto&)
+        .subscribe(HERE, [publish_door_state, publish_empty_heartbeat](const auto&)
           {
             publish_door_state(DoorMode::MODE_OPEN);
             publish_empty_heartbeat();
@@ -195,7 +195,7 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
       rmf_rxcpp::subscription_guard sub2 =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe([publish_door_state, publish_heartbeat_with_session](const auto&)
+        .subscribe(HERE, [publish_door_state, publish_heartbeat_with_session](const auto&)
           {
             publish_door_state(DoorMode::MODE_CLOSED);
             publish_heartbeat_with_session();

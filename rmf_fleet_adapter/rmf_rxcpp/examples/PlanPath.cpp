@@ -128,7 +128,7 @@ struct PlannerAction
 
     if (!_discarded)
     {
-      w.schedule([this, s, w](const auto&)
+      w.schedule(HERE, [this, s, w](const auto&)
         {
           (*this)(s, w);
         });
@@ -331,7 +331,7 @@ struct MetaPlannerAction
     std::cout << "Jobs: " << planner_actions.size() << std::endl;
 
     auto meta_job = rmf_rxcpp::make_job_from_action_list(planner_actions);
-    meta_job.subscribe(
+    meta_job.subscribe(HERE,
       [this, s, estimate_leeway](
         const PlannerAction::Progress& progress)
       {
@@ -445,7 +445,7 @@ int main()
   std::promise<std::vector<rmf_traffic::Route>> itinerary_promise;
   auto itinerary_future = itinerary_promise.get_future();
   meta_planner_job
-  .subscribe([&itinerary_promise](const auto& itinerary)
+  .subscribe(HERE, [&itinerary_promise](const auto& itinerary)
     {
       std::cout <<"\nBest plan for B:" << std::endl;
       itinerary_promise.set_value(itinerary);

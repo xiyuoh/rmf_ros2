@@ -48,7 +48,8 @@ public:
 
   void schedule(std::function<void()> job) final
   {
-    _worker.schedule([job = std::move(job)](const auto&) { job(); });
+    std::cout << "WorkerWrapper::schedule" << std::endl;
+    _worker.schedule(HERE, [job = std::move(job)](const auto&) { job(); });
   }
 
 private:
@@ -290,7 +291,7 @@ void Adapter::add_traffic_light(
         node,
         negotiation.get());
 
-      worker.schedule(
+      worker.schedule(HERE,
         [handle_cb = std::move(handle_cb),
         update_handle = std::move(update_handle)](const auto&)
         {
@@ -380,7 +381,8 @@ void Adapter::add_easy_traffic_light(
 
       command_handle->pimpl = easy_handle;
 
-      worker.schedule(
+      std::cout << "add_easy_traffic_light::handle_cb" << std::endl;
+      worker.schedule(HERE,
         [easy_handle = std::move(easy_handle),
         handle_callback = std::move(handle_callback)](const auto&)
         {

@@ -167,6 +167,21 @@
 #include <type_traits>
 #include <utility>
 
+template <typename T>
+std::string to_str(T* ptr)
+{
+  std::stringstream ss;
+  ss << ptr;
+  return ss.str();
+}
+
+inline std::string here(const std::string& file, std::size_t line)
+{
+  return file + ":" + std::to_string(line);
+}
+
+#define HERE here(__FILE__, __LINE__)
+
 #if defined(RXCPP_ON_IOS) || defined(RXCPP_ON_ANDROID)
 #include <pthread.h>
 #endif

@@ -40,8 +40,8 @@ TaskManagerPtr TaskManager::make(agv::RobotContextPtr context)
 {
   auto mgr = TaskManagerPtr(new TaskManager(std::move(context)));
   mgr->_emergency_sub = mgr->_context->node()->emergency_notice()
-    .observe_on(rxcpp::identity_same_worker(mgr->_context->worker()))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(mgr->_context->worker()))
+    .subscribe(HERE,
     [w = mgr->weak_from_this()](const auto& msg)
     {
       if (auto mgr = w.lock())
@@ -340,8 +340,8 @@ void TaskManager::_begin_next_task()
       _queue.size());
 
     _task_sub = _active_task->observe()
-      .observe_on(rxcpp::identity_same_worker(_context->worker()))
-      .subscribe(
+      .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
+      .subscribe(HERE,
       [this, id = _active_task->id()](Task::StatusMsg msg)
       {
         msg.task_id = id;
@@ -414,8 +414,8 @@ void TaskManager::_begin_waiting()
     _context, waiting_point)->begin();
 
   _task_sub = _waiting->observe()
-    .observe_on(rxcpp::identity_same_worker(_context->worker()))
-    .subscribe(
+    .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
+    .subscribe(HERE,
     [me = weak_from_this()](Task::StatusMsg msg)
     {
       const auto self = me.lock();

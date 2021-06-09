@@ -127,7 +127,7 @@ struct concat
                 }));
 
                 auto selectedSource = on_exception(
-                    [&](){return state->coordinator.in(std::move(st));},
+                    [&](){return state->coordinator.in(HERE, std::move(st));},
                     state->out);
                 if (selectedSource.empty()) {
                     return;
@@ -164,7 +164,7 @@ struct concat
                 if (selectedSinkInner.empty()) {
                     return;
                 }
-                selectedSource->subscribe(std::move(selectedSinkInner.get()));
+                selectedSource->subscribe(HERE, std::move(selectedSinkInner.get()));
             }
             observable<source_value_type, source_operator_type> source;
             composite_subscription sourceLifetime;
@@ -186,7 +186,7 @@ struct concat
         state->out.add(state->sourceLifetime);
 
         auto source = on_exception(
-            [&](){return state->coordinator.in(state->source);},
+            [&](){return state->coordinator.in(HERE, state->source);},
             state->out);
         if (source.empty()) {
             return;
@@ -223,7 +223,7 @@ struct concat
         if (selectedSink.empty()) {
             return;
         }
-        source->subscribe(std::move(selectedSink.get()));
+        source->subscribe(HERE, std::move(selectedSink.get()));
     }
 };
 

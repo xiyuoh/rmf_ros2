@@ -116,7 +116,7 @@ private:
                     keepAlive->q.pop();
                     keepAlive->r.reset(keepAlive->q.empty());
                     guard.unlock();
-                    what(keepAlive->r.get_recurse());
+                    what(to_str(what.activity.inner.get()), keepAlive->r.get_recurse());
                 }
             });
         }
@@ -125,17 +125,30 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
-            schedule(now(), scbl);
+        virtual void schedule(const std::string& d, const schedulable& scbl) const override {
+            schedule(d, now(), scbl);
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const override {
             if (scbl.is_subscribed()) {
                 std::unique_lock<std::mutex> guard(state->lock);
-                state->q.push(new_worker_state::item_type(when, scbl));
+                state->q.push(d, new_worker_state::item_type(when, scbl));
                 state->r.reset(false);
             }
             state->wake.notify_one();
+        }
+
+        void dump_queue_info() const override {
+          if (!state)
+          {
+            std::cout << "[new_worker::dump_queue_info] null state!" << std::endl;
+            return;
+          }
+
+          std::unique_lock<std::mutex> guard(state->lock);
+          std::cout << "v[new_worker::dump_queue_info]v" << std::endl;
+          state->q.dump();
+          std::cout << "^[new_worker::dump_queue_info]^" << std::endl;
         }
     };
 

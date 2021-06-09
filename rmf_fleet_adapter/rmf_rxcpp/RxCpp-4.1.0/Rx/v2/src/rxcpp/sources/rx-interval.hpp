@@ -90,7 +90,7 @@ struct interval : public source_base<long>
             return;
         }
 
-        controller.schedule_periodically(initial.initial, initial.period, selectedProducer.get());
+        controller.schedule_periodically(HERE, initial.initial, initial.period, selectedProducer.get());
     }
 };
 

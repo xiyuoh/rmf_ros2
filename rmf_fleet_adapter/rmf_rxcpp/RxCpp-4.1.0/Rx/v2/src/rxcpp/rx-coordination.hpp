@@ -53,7 +53,7 @@ private:
     template<class Observable>
     struct get_observable
     {
-        typedef decltype((*(input_type*)nullptr).in((*(Observable*)nullptr))) type;
+        typedef decltype((*(input_type*)nullptr).in(std::string(), (*(Observable*)nullptr))) type;
     };
 
     template<class Subscriber>
@@ -90,9 +90,9 @@ public:
     }
 
     template<class Observable>
-    auto in(Observable o) const
+    auto in(const std::string& desc, Observable o) const
         -> typename get_observable<Observable>::type {
-        return input.in(std::move(o));
+        return input.in(desc, std::move(o));
         static_assert(is_observable<Observable>::value, "can only synchronize observables");
     }
 
@@ -135,7 +135,7 @@ class identity_one_worker : public coordination_base
             return factory.now();
         }
         template<class Observable>
-        auto in(Observable o) const
+        auto in(const std::string& desc, Observable o) const
             -> Observable {
             return o;
         }
@@ -264,7 +264,7 @@ class serialize_one_worker : public coordination_base
             return factory.now();
         }
         template<class Observable>
-        auto in(Observable o) const
+        auto in(const std::string& desc, Observable o) const
             -> Observable {
             return o;
         }

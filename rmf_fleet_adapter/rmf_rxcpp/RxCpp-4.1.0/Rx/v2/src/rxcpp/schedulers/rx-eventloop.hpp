@@ -51,12 +51,16 @@ private:
             return clock_type::now();
         }
 
-        virtual void schedule(const schedulable& scbl) const {
-            controller.schedule(lifetime, scbl.get_action());
+        virtual void schedule(const std::string& d, const schedulable& scbl) const {
+            controller.schedule(d, lifetime, scbl.get_action());
         }
 
-        virtual void schedule(clock_type::time_point when, const schedulable& scbl) const {
-            controller.schedule(when, lifetime, scbl.get_action());
+        virtual void schedule(const std::string& d, clock_type::time_point when, const schedulable& scbl) const {
+            controller.schedule(d, when, lifetime, scbl.get_action());
+        }
+
+        void dump_queue_info() const override {
+          controller.dump_queue_info();
         }
     };
 
@@ -99,6 +103,7 @@ public:
     }
 
     virtual worker create_worker(composite_subscription cs) const {
+        std::cout << "Returning loop worker index " << (count+1) % loops.size() << std::endl;
         return worker(cs, std::make_shared<loop_worker>(cs, loops[++count % loops.size()], this->shared_from_this()));
     }
 };

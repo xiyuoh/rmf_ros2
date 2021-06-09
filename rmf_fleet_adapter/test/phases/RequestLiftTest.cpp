@@ -92,14 +92,14 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
 
       // TODO(MXG): Put an explicit timeout here so this line doesn't hang
       // forever in the event of a failure.
-      obs.as_blocking().subscribe(rx_sub);
+      obs.as_blocking().subscribe(HERE, rx_sub);
       CHECK(!received_open);
     }
   }
 
   WHEN("it is started")
   {
-    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(
+    rmf_rxcpp::subscription_guard sub = active_phase->observe().subscribe(HERE,
       [test](const auto& status)
       {
         std::unique_lock<std::mutex> lk(test->m);

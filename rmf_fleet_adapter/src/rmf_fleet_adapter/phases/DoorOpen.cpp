@@ -127,7 +127,7 @@ void DoorOpen::ActivePhase::_init_obs()
           const auto delay = me->_context->now() - current_expected_finish;
           if (delay > std::chrono::seconds(0))
           {
-            me->_context->worker().schedule(
+            me->_context->worker().schedule(HERE,
               [context = me->_context, delay](const auto&)
               {
                 context->itinerary().delay(delay);
@@ -174,7 +174,7 @@ void DoorOpen::ActivePhase::_init_obs()
               me->_door_name,
               me->_request_id
             );
-            me->_door_close_phase->observe().subscribe(s);
+            me->_door_close_phase->observe().subscribe(HERE, s);
           }
         }));
 }

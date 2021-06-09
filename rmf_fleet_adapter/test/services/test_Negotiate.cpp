@@ -398,8 +398,8 @@ public:
 
     auto sub = rmf_rxcpp::make_job<
       rmf_fleet_adapter::services::Negotiate::Result>(negotiate)
-      .observe_on(rxcpp::identity_same_worker(_worker))
-      .subscribe([w = weak_from_this()](const auto& result)
+      .observe_on(HERE, rxcpp::identity_same_worker(_worker))
+      .subscribe(HERE, [w = weak_from_this()](const auto& result)
         {
           result.respond();
           if (const auto self = w.lock())
@@ -533,8 +533,8 @@ public:
 
     auto sub = rmf_rxcpp::make_job<
       rmf_fleet_adapter::services::Negotiate::Result>(std::move(negotiate))
-      .observe_on(rxcpp::identity_same_worker(_worker))
-      .subscribe([w = weak_from_this()](const auto& result)
+      .observe_on(HERE, rxcpp::identity_same_worker(_worker))
+      .subscribe(HERE, [w = weak_from_this()](const auto& result)
         {
           result.respond();
           if (const auto self = w.lock())

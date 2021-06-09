@@ -81,18 +81,20 @@ struct merge
 
     struct values
     {
-        values(source_operator_type o, coordination_type sf)
+        values(source_operator_type o, const std::string& desc, coordination_type sf)
             : source_operator(std::move(o))
+            , desc(desc)
             , coordination(std::move(sf))
         {
         }
         source_operator_type source_operator;
+        std::string desc;
         coordination_type coordination;
     };
     values initial;
 
-    merge(const source_type& o, coordination_type sf)
-        : initial(o.source_operator, std::move(sf))
+    merge(const source_type& o, const std::string& desc, coordination_type sf)
+        : initial(o.source_operator, desc, std::move(sf))
     {
     }
 
@@ -134,7 +136,7 @@ struct merge
         state->out.add(outercs);
 
         auto source = on_exception(
-            [&](){return state->coordinator.in(state->source);},
+            [&](){return state->coordinator.in(state->desc, state->source);},
             state->out);
         if (source.empty()) {
             return;
@@ -160,7 +162,7 @@ struct merge
                     state->out.remove(innercstoken);
                 }));
 
-                auto selectedSource = state->coordinator.in(st);
+                auto selectedSource = state->coordinator.in(state->desc, st);
 
                 ++state->pendingCompletions;
                 // this subscribe does not share the source subscription
@@ -185,7 +187,7 @@ struct merge
                 );
 
                 auto selectedSinkInner = state->coordinator.out(sinkInner);
-                selectedSource.subscribe(std::move(selectedSinkInner));
+                selectedSource.subscribe(state->desc, std::move(selectedSinkInner));
             },
         // on_error
             [state](std::exception_ptr e) {
@@ -204,7 +206,7 @@ struct merge
         if (selectedSink.empty()) {
             return;
         }
-        source->subscribe(std::move(selectedSink.get()));
+        source->subscribe(state->desc, std::move(selectedSink.get()));
     }
 };
 
@@ -231,8 +233,8 @@ struct member_overload<merge_tag>
         class Value = rxu::value_type_t<SourceValue>,
         class Result = observable<Value, Merge>
     >
-    static Result member(Observable&& o) {
-        return Result(Merge(std::forward<Observable>(o), identity_current_thread()));
+    static Result member(Observable&& o, const std::string& desc) {
+        return Result(Merge(std::forward<Observable>(o), desc, identity_current_thread()));
     }
 
     template<class Observable, class Coordination,
@@ -244,8 +246,8 @@ struct member_overload<merge_tag>
         class Value = rxu::value_type_t<SourceValue>,
         class Result = observable<Value, Merge>
     >
-    static Result member(Observable&& o, Coordination&& cn) {
-        return Result(Merge(std::forward<Observable>(o), std::forward<Coordination>(cn)));
+    static Result member(Observable&& o, const std::string& desc, Coordination&& cn) {
+        return Result(Merge(std::forward<Observable>(o), desc, std::forward<Coordination>(cn)));
     }
 
     template<class Observable, class Value0, class... ValueN,
@@ -258,8 +260,8 @@ struct member_overload<merge_tag>
         class Value = rxu::value_type_t<Merge>,
         class Result = observable<Value, Merge>
     >
-    static Result member(Observable&& o, Value0&& v0, ValueN&&... vn) {
-        return Result(Merge(rxs::from(o.as_dynamic(), v0.as_dynamic(), vn.as_dynamic()...), identity_current_thread()));
+    static Result member(Observable&& o, const std::string& desc, Value0&& v0, ValueN&&... vn) {
+        return Result(Merge(rxs::from(o.as_dynamic(), v0.as_dynamic(), vn.as_dynamic()...), desc, identity_current_thread()));
     }
 
     template<class Observable, class Coordination, class Value0, class... ValueN,
@@ -273,8 +275,8 @@ struct member_overload<merge_tag>
         class Value = rxu::value_type_t<Merge>,
         class Result = observable<Value, Merge>
     >
-    static Result member(Observable&& o, Coordination&& cn, Value0&& v0, ValueN&&... vn) {
-        return Result(Merge(rxs::from(o.as_dynamic(), v0.as_dynamic(), vn.as_dynamic()...), std::forward<Coordination>(cn)));
+    static Result member(Observable&& o, const std::string& desc, Coordination&& cn, Value0&& v0, ValueN&&... vn) {
+        return Result(Merge(rxs::from(o.as_dynamic(), v0.as_dynamic(), vn.as_dynamic()...), desc, std::forward<Coordination>(cn)));
     }
 
     template<class... AN>

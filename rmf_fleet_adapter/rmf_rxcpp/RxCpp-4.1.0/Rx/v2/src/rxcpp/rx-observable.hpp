@@ -169,7 +169,7 @@ template<class T, class Observable>
 class blocking_observable
 {
     template<class Obsvbl, class... ArgN>
-    static auto blocking_subscribe(const Obsvbl& source, bool do_rethrow, ArgN&&... an)
+    static auto blocking_subscribe(const std::string& d, const Obsvbl& source, bool do_rethrow, ArgN&&... an)
         -> void {
         std::mutex lock;
         std::condition_variable wake;
@@ -222,7 +222,7 @@ class blocking_observable
             });
 
         std::unique_lock<std::mutex> guard(lock);
-        source.subscribe(std::move(scbr));
+        source.subscribe(d, std::move(scbr));
 
         wake.wait(guard,
             [&, track](){
@@ -266,9 +266,9 @@ public:
     /// if a subscription or subscriber is not provided then a new subscription will be created.
     ///
     template<class... ArgN>
-    auto subscribe(ArgN&&... an) const
+    auto subscribe(const std::string& d, ArgN&&... an) const
         -> void {
-        return blocking_subscribe(source, false, std::forward<ArgN>(an)...);
+        return blocking_subscribe(d, source, false, std::forward<ArgN>(an)...);
     }
 
     ///
@@ -291,9 +291,9 @@ public:
     /// if a subscription or subscriber is not provided then a new subscription will be created.
     ///
     template<class... ArgN>
-    auto subscribe_with_rethrow(ArgN&&... an) const
+    auto subscribe_with_rethrow(const std::string& d, ArgN&&... an) const
         -> void {
-        return blocking_subscribe(source, true, std::forward<ArgN>(an)...);
+        return blocking_subscribe(d, source, true, std::forward<ArgN>(an)...);
     }
 
     /*! Return the first item emitted by this blocking_observable, or throw an std::runtime_error exception if it emits no items.
@@ -527,7 +527,7 @@ private:
     friend bool operator==(const observable<U, SO>&, const observable<U, SO>&);
 
     template<class Subscriber>
-    auto detail_subscribe(Subscriber o) const
+    auto detail_subscribe(const std::string& d, Subscriber o) const
         -> composite_subscription {
 
         typedef rxu::decay_t<Subscriber> subscriber_type;
@@ -548,7 +548,7 @@ private:
         // make sure to let current_thread take ownership of the thread as early as possible.
         if (rxsc::current_thread::is_schedule_required()) {
             const auto& sc = rxsc::make_current_thread();
-            sc.create_worker(o.get_subscription()).schedule(subscriber);
+            sc.create_worker(o.get_subscription()).schedule(d, subscriber);
         } else {
             // current_thread already owns this thread.
             subscriber.subscribe();
@@ -666,9 +666,9 @@ public:
     /*! @copydoc rx-subscribe.hpp
      */
     template<class... ArgN>
-    auto subscribe(ArgN&&... an) const
+    auto subscribe(const std::string& d, ArgN&&... an) const
         -> composite_subscription {
-        return detail_subscribe(make_subscriber<T>(std::forward<ArgN>(an)...));
+        return detail_subscribe(d, make_subscriber<T>(std::forward<ArgN>(an)...));
     }
 
     /*! @copydoc rx-all.hpp

@@ -55,7 +55,7 @@ public:
         return;
       }
 
-      w.schedule([this, s, w](const auto&)
+      w.schedule(HERE, [this, s, w](const auto&)
         {
           (*this)(s, w);
         });
@@ -192,8 +192,8 @@ public:
     void begin()
     {
       _subscription = _subtasks->observe()
-        .observe_on(rxcpp::observe_on_event_loop())
-        .subscribe(
+        .observe_on(HERE, rxcpp::observe_on_event_loop())
+        .subscribe(HERE,
         [weak = weak_from_this()](
           const StatusMsg& msg)
         {
@@ -306,7 +306,7 @@ SCENARIO("Test simple task")
   std::promise<bool> completed_promise;
   auto completed_future = completed_promise.get_future();
   auto status_sub = task->observe()
-    .subscribe(
+    .subscribe(HERE,
     [](const rmf_fleet_adapter::Task::StatusMsg& msg)
     {
       if (msg.status.find("A") != std::string::npos)
@@ -406,7 +406,7 @@ SCENARIO("Test nested task")
   std::promise<bool> completed_promise;
   auto completed_future = completed_promise.get_future();
   auto status_sub = task->observe()
-    .subscribe(
+    .subscribe(HERE,
     [&count_limits](const rmf_fleet_adapter::Task::StatusMsg& msg)
     {
       std::pair<std::size_t, std::size_t> limits = {0, 0};
