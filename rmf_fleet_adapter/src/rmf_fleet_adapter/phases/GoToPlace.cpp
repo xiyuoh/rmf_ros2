@@ -138,7 +138,7 @@ void GoToPlace::Active::respond(
   }
 
   auto negotiate_sub =
-    rmf_rxcpp::make_job<services::Negotiate::Result>(negotiate)
+    rmf_rxcpp::make_job<services::Negotiate::Result>(HERE, negotiate)
     .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
     .subscribe(HERE,
     [w = weak_from_this(), CAPTURE_LEAK_HERE](const auto& result)
@@ -225,7 +225,7 @@ void GoToPlace::Active::find_plan()
     _context->schedule()->snapshot(), _context->itinerary().id(),
     _context->profile());
 
-  _plan_subscription = rmf_rxcpp::make_job<services::FindPath::Result>(
+  _plan_subscription = rmf_rxcpp::make_job<services::FindPath::Result>(HERE,
     _find_path_service)
     .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
     .subscribe(HERE,
@@ -285,7 +285,7 @@ void GoToPlace::Active::find_emergency_plan()
     _context->profile());
 
   _plan_subscription = rmf_rxcpp::make_job<
-    services::FindEmergencyPullover::Result>(_pullover_service)
+    services::FindEmergencyPullover::Result>(HERE, _pullover_service)
     .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
     .subscribe(HERE,
     [w = weak_from_this(), CAPTURE_LEAK_HERE](

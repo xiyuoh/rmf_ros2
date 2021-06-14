@@ -81,7 +81,7 @@ public:
 
       _job = std::make_shared<Job>(count, count_length, period);
 
-      _obs = rmf_rxcpp::make_job<std::size_t>(_job)
+      _obs = rmf_rxcpp::make_job<std::size_t>(HERE, _job)
         .map([name = std::move(name)](const std::size_t v)
           {
             StatusMsg msg;

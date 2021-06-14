@@ -368,7 +368,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::plan_timing(
     new_planner, rmf_traffic::agv::Plan::StartSet({std::move(start)}),
     std::move(goal), schedule->snapshot(), itinerary.id(), profile);
 
-  find_path_subscription = rmf_rxcpp::make_job<services::FindPath::Result>(
+  find_path_subscription = rmf_rxcpp::make_job<services::FindPath::Result>(HERE,
     find_path_service)
     .observe_on(HERE, rxcpp::identity_same_worker(worker))
     .subscribe(HERE,
@@ -1796,7 +1796,7 @@ void TrafficLight::UpdateHandle::Implementation::Negotiator::respond(
     table_viewer, responder, std::move(approval_cb), std::move(evaluator));
 
   auto negotiate_sub =
-    rmf_rxcpp::make_job<services::Negotiate::Result>(negotiate)
+    rmf_rxcpp::make_job<services::Negotiate::Result>(HERE, negotiate)
     .observe_on(HERE, rxcpp::identity_same_worker(data->worker))
     .subscribe(HERE,
     [w = data->weak_from_this()](const auto& result)

@@ -82,7 +82,7 @@ struct AsyncCounterAction
 TEST_CASE("async job", "[Jobs]")
 {
   auto action = std::make_shared<AsyncCounterAction>();
-  auto j = rmf_rxcpp::make_job<int>(action);
+  auto j = rmf_rxcpp::make_job<int>(HERE, action);
   j.as_blocking().subscribe(HERE);
   REQUIRE(action->counter == 10);
 }
@@ -166,7 +166,7 @@ TEST_CASE("make group jobs", "[Jobs]")
     std::make_shared<DummyAction>(),
     std::make_shared<DummyAction>()
   };
-  auto j = rmf_rxcpp::make_job_from_action_list(actions);
+  auto j = rmf_rxcpp::make_job_from_action_list(HERE, actions);
   j.as_blocking().subscribe(HERE);
   for (const auto& a : actions)
   {

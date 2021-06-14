@@ -29,12 +29,13 @@ using IsAsyncAction = std::is_constructible<
 
 template<typename Action, typename Subscriber>
 void schedule_job(
+  const std::string& desc,
   const std::weak_ptr<Action>& a,
   const Subscriber& s,
   const rxcpp::schedulers::worker& w,
   typename std::enable_if_t<IsAsyncAction<Action, Subscriber>::value>* = 0)
 {
-  w.schedule(HERE,
+  w.schedule(desc,
     [a, s, w](const auto&)
     {
       if (const auto action = a.lock())
@@ -44,12 +45,13 @@ void schedule_job(
 
 template<typename Action, typename Subscriber>
 void schedule_job(
+  const std::string& desc,
   const std::weak_ptr<Action>& a,
   const Subscriber& s,
   const rxcpp::schedulers::worker& w,
   typename std::enable_if_t<!IsAsyncAction<Action, Subscriber>::value>* = 0)
 {
-  w.schedule(HERE,
+  w.schedule(desc,
     [a, s](const auto&)
     {
       if (const auto action = a.lock())
@@ -74,13 +76,13 @@ inline auto get_event_loop()
  * @return
  */
 template<typename T, typename Action>
-auto make_observable(const std::shared_ptr<Action>& action)
+auto make_observable(const std::string& desc, const std::shared_ptr<Action>& action)
 {
   return rxcpp::observable<>::create<T>(
-    [a = std::weak_ptr<Action>(action)](const auto& s)
+    [desc, a = std::weak_ptr<Action>(action)](const auto& s)
     {
       auto worker = get_event_loop().create_worker();
-      detail::schedule_job(a, s, worker);
+      detail::schedule_job(desc, a, s, worker);
     });
 }
 
@@ -97,17 +99,17 @@ auto make_leaky_observable(const std::shared_ptr<Action>& action)
 }
 
 template<typename T, typename ActionsIterable>
-auto make_merged_observable(const ActionsIterable& actions)
+auto make_merged_observable(const std::string& desc, const ActionsIterable& actions)
 {
   // needed to prevent dynamic observables, which reduces performance
-  using Observable = decltype(detail::make_observable<T>(*actions.begin()));
+  using Observable = decltype(detail::make_observable<T>(desc, *actions.begin()));
 
-  return rxcpp::observable<>::create<Observable>([&actions](const auto& s)
+  return rxcpp::observable<>::create<Observable>([&actions, desc](const auto& s)
       {
         for (const auto& a : actions)
-          s.on_next(detail::make_observable<T>(a));
+          s.on_next(detail::make_observable<T>(desc, a));
         s.on_completed();
-      }).merge(HERE, rxcpp::serialize_event_loop());
+      }).merge(desc, rxcpp::serialize_event_loop());
 }
 
 } // namespace detail

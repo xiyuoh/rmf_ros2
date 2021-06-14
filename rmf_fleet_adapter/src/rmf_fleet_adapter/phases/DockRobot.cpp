@@ -32,7 +32,7 @@ DockRobot::ActivePhase::ActivePhase(
   _description = oss.str();
 
   _action = std::make_shared<Action>(this);
-  _obs = rmf_rxcpp::make_job<Task::StatusMsg>(_action);
+  _obs = rmf_rxcpp::make_job<Task::StatusMsg>(HERE, _action);
 }
 
 //==============================================================================

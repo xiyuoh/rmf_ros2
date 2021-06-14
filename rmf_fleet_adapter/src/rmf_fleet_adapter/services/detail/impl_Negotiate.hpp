@@ -165,7 +165,7 @@ void Negotiate::operator()(const Subscriber& s)
       return false;
     };
 
-  _search_sub = rmf_rxcpp::make_job_from_action_list(_queued_jobs)
+  _search_sub = rmf_rxcpp::make_job_from_action_list(HERE, _queued_jobs)
     .observe_on(HERE, rxcpp::observe_on_event_loop())
     .subscribe(HERE,
     [n_weak = weak_from_this(), s,
@@ -209,7 +209,7 @@ void Negotiate::operator()(const Subscriber& s)
               std::chrono::seconds(15), 200);
 
             n->_rollout_sub =
-            rmf_rxcpp::make_job<jobs::Rollout::Result>(n->_rollout_job)
+            rmf_rxcpp::make_job<jobs::Rollout::Result>(HERE, n->_rollout_job)
             .observe_on(HERE, rxcpp::observe_on_event_loop())
             .subscribe(HERE,
               [n, check_if_finished](const jobs::Rollout::Result& result)

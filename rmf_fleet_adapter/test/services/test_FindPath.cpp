@@ -135,7 +135,7 @@ SCENARIO("Find a path")
     std::promise<rmf_traffic::agv::Plan::Result> result_0_promise;
     auto result_0_future = result_0_promise.get_future();
     auto path_sub =
-      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
+      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(HERE,
       path_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -160,7 +160,7 @@ SCENARIO("Find a path")
     std::promise<rmf_traffic::agv::Plan::Result> pre_result_1_promise;
     auto pre_result_1_future = pre_result_1_promise.get_future();
     path_sub =
-      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
+      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(HERE,
       path_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -199,7 +199,7 @@ SCENARIO("Find a path")
     std::promise<rmf_traffic::agv::Plan::Result> result_1_promise;
     auto result_1_future = result_1_promise.get_future();
     path_sub =
-      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
+      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(HERE,
       path_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -255,7 +255,7 @@ SCENARIO("Find a path")
     std::promise<rmf_traffic::agv::Plan::Result> result_1_promise;
     auto result_1_future = result_1_promise.get_future();
     auto path_sub =
-      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
+      rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(HERE,
       path_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -339,7 +339,7 @@ SCENARIO("Office map")
   std::promise<rmf_traffic::agv::Plan::Result> result_0_promise;
   auto result_0_future = result_0_promise.get_future();
   auto path_sub =
-    rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(
+    rmf_rxcpp::make_job<rmf_fleet_adapter::services::FindPath::Result>(HERE,
     path_service)
     .observe_on(HERE, rxcpp::observe_on_event_loop())
     .subscribe(HERE,

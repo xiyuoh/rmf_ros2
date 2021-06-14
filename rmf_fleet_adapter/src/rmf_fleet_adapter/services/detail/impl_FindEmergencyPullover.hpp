@@ -59,7 +59,7 @@ void FindEmergencyPullover::operator()(const Subscriber& s)
   for (const auto& job : _search_jobs)
     job->set_cost_limit(initial_max_cost);
 
-  _search_sub = rmf_rxcpp::make_job_from_action_list(_search_jobs)
+  _search_sub = rmf_rxcpp::make_job_from_action_list(HERE, _search_jobs)
     .subscribe(HERE,
     [weak = weak_from_this(), s, N_jobs](
       const jobs::SearchForPath::Result& progress)

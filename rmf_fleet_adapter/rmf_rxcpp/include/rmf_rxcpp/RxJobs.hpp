@@ -26,9 +26,9 @@
 namespace rmf_rxcpp {
 
 template<typename T, typename Action>
-inline auto make_job(const std::shared_ptr<Action>& action)
+inline auto make_job(const std::string& desc, const std::shared_ptr<Action>& action)
 {
-  return detail::make_observable<T>(action);
+  return detail::make_observable<T>(desc, action);
 }
 
 //template<typename T, typename F>
@@ -44,12 +44,12 @@ inline auto merge_jobs(const Job0& o0, Jobs&& ... os)
 }
 
 template<typename ActionsIterable>
-inline auto make_job_from_action_list(const ActionsIterable& actions)
+inline auto make_job_from_action_list(const std::string& desc, const ActionsIterable& actions)
 {
   using Action =
     typename std::iterator_traits<decltype(actions.begin())>::value_type::
     element_type;
-  return detail::make_merged_observable<typename Action::Result>(actions);
+  return detail::make_merged_observable<typename Action::Result>(desc, actions);
 }
 
 struct subscription_guard

@@ -27,7 +27,7 @@ namespace services {
 template<typename Subscriber>
 void FindPath::operator()(const Subscriber& s)
 {
-  _search_sub = rmf_rxcpp::make_job<jobs::SearchForPath::Result>(_search_job)
+  _search_sub = rmf_rxcpp::make_job<jobs::SearchForPath::Result>(HERE, _search_job)
     .observe_on(HERE, rxcpp::observe_on_event_loop())
     .subscribe(HERE,
     [s](const jobs::SearchForPath::Result& result)

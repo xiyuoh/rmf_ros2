@@ -135,7 +135,7 @@ SCENARIO("Emergency Pullover")
     auto result_0_future = result_0_promise.get_future();
     auto pullover_sub =
       rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(
+      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(HERE,
       pullover_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -172,7 +172,7 @@ SCENARIO("Emergency Pullover")
     auto pre_result_1_future = pre_result_1_promise.get_future();
     pullover_sub =
       rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(
+      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(HERE,
       pullover_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -213,7 +213,7 @@ SCENARIO("Emergency Pullover")
     auto result_1_future = result_1_promise.get_future();
     pullover_sub =
       rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(
+      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(HERE,
       pullover_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,
@@ -269,7 +269,7 @@ SCENARIO("Emergency Pullover")
     auto result_1_future = result_1_promise.get_future();
     auto pullover_sub =
       rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(
+      rmf_fleet_adapter::services::FindEmergencyPullover::Result>(HERE,
       pullover_service)
       .observe_on(HERE, rxcpp::observe_on_event_loop())
       .subscribe(HERE,

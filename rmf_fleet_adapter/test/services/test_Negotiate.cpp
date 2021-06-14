@@ -397,7 +397,7 @@ public:
       evaluator);
 
     auto sub = rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::Negotiate::Result>(negotiate)
+      rmf_fleet_adapter::services::Negotiate::Result>(HERE, negotiate)
       .observe_on(HERE, rxcpp::identity_same_worker(_worker))
       .subscribe(HERE, [w = weak_from_this()](const auto& result)
         {
@@ -532,7 +532,7 @@ public:
       _planner, _starts, table_viewer, responder, nullptr, evaluator);
 
     auto sub = rmf_rxcpp::make_job<
-      rmf_fleet_adapter::services::Negotiate::Result>(std::move(negotiate))
+      rmf_fleet_adapter::services::Negotiate::Result>(HERE, std::move(negotiate))
       .observe_on(HERE, rxcpp::identity_same_worker(_worker))
       .subscribe(HERE, [w = weak_from_this()](const auto& result)
         {
