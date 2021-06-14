@@ -497,7 +497,7 @@ void TaskManager::retreat_to_charger()
 
   const auto& constraints = task_planner->configuration().constraints();
   const double threshold_soc = constraints.threshold_soc();
-  const double retreat_threshold = 1.05 * threshold_soc; // safety factor
+  const double retreat_threshold = 1.0 * threshold_soc; // safety factor
   const double current_battery_soc = _context->current_battery_soc();
 
   const auto& parameters = task_planner->configuration().parameters();
