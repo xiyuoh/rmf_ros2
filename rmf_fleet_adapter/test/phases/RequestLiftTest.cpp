@@ -141,12 +141,12 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
       rclcpp::TimerBase::SharedPtr timer =
         data->ros_node->create_wall_timer(
           std::chrono::milliseconds(100),
-          [test, data = data, lift_name, destination, lift_state_pub]()
+          [test, node = data->ros_node, lift_name, destination, lift_state_pub]()
           {
             std::unique_lock<std::mutex> lk(test->m);
             LiftState lift_state;
             lift_state.lift_name = lift_name;
-            lift_state.lift_time = data->ros_node->now();
+            lift_state.lift_time = node->now();
             lift_state.motion_state = LiftState::MOTION_STOPPED;
             lift_state.destination_floor = destination;
             lift_state.current_floor = destination;

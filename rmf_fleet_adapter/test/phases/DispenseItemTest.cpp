@@ -146,19 +146,19 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto timer =
         data->ros_node->create_wall_timer(
           std::chrono::milliseconds(100),
-          [test, data = data, request_guid, result_pub, state_pub]()
+          [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {
             std::unique_lock<std::mutex> lk(test->m);
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::SUCCESS;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             DispenserState state;
             state.guid = request_guid;
             state.mode = DispenserState::IDLE;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state_pub->publish(state);
           });
 
@@ -186,19 +186,19 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto timer =
         data->ros_node->create_wall_timer(
           std::chrono::milliseconds(100),
-          [test, data = data, request_guid, result_pub, state_pub]()
+          [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {
             std::unique_lock<std::mutex> lk(test->m);
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::FAILED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             DispenserState state;
             state.guid = request_guid;
             state.mode = DispenserState::IDLE;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state_pub->publish(state);
           });
 
@@ -226,16 +226,16 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe(HERE, [test, data = data, request_guid, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, node = data->ros_node, request_guid, result_pub, state_pub, target](const auto&)
           {
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::ACKNOWLEDGED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             DispenserState state;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state.guid = target;
             state.mode = DispenserState::BUSY;
             state_pub->publish(state);
@@ -264,12 +264,12 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe(HERE, [test, data = data, request_guid, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, node = data->ros_node, request_guid, result_pub, state_pub, target](const auto&)
           {
             DispenserResult result;
             result.request_guid = request_guid;
             result.status = DispenserResult::ACKNOWLEDGED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             DispenserState state;

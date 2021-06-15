@@ -116,11 +116,11 @@ SCENARIO_METHOD(MockAdapterFixture, "door close phase", "[phases]")
       DoorSupervisorHeartbeatTopicName, 10);
 
     auto publish_door_state =
-      [test, data = data, door_name, door_state_pub](uint32_t mode)
+      [test, node = data->ros_node, door_name, door_state_pub](uint32_t mode)
       {
         DoorState door_state;
         door_state.door_name = door_name;
-        door_state.door_time = data->ros_node->now();
+        door_state.door_time = node->now();
         door_state.current_mode.value = mode;
         door_state_pub->publish(door_state);
       };

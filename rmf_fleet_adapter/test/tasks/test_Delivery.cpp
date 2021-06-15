@@ -98,6 +98,7 @@ private:
   rclcpp::Publisher<DispenserResult>::SharedPtr _result_pub;
   std::unordered_map<std::string, bool> _task_complete_map;
   rclcpp::TimerBase::SharedPtr _timer;
+  bool _fulfilled_promise = false;
 
   void _process_request(const DispenserRequest& msg)
   {
@@ -114,19 +115,27 @@ private:
     {
       using namespace std::chrono_literals;
       _timer = _node->create_wall_timer(
-        10ms, [this, msg]()
+        10ms, [me = weak_from_this(), msg]()
         {
-          _timer.reset();
-          _task_complete_map[msg.request_guid] = true;
+          const auto self = me.lock();
+          if (!self)
+            return;
+
+          self->_timer.reset();
+          self->_task_complete_map[msg.request_guid] = true;
 
           DispenserResult result;
-          result.time = _node->now();
+          result.time = self->_node->now();
           result.status = DispenserResult::SUCCESS;
-          result.source_guid = _name;
+          result.source_guid = self->_name;
           result.request_guid = msg.request_guid;
-          _result_pub->publish(result);
+          self->_result_pub->publish(result);
 
-          success_promise.set_value(true);
+          if (!self->_fulfilled_promise)
+          {
+            self->_fulfilled_promise = true;
+            self->success_promise.set_value(true);
+          }
         });
     }
 
@@ -351,15 +360,22 @@ SCENARIO("Test Delivery")
 
   std::promise<bool> completed_promise;
   bool at_least_one_incomplete = false;
+  bool fulfilled_promise = false;
   auto completed_future = completed_promise.get_future();
   const auto task_sub = adapter.node()->create_subscription<
     rmf_task_msgs::msg::TaskSummary>(
     rmf_fleet_adapter::TaskSummaryTopicName, rclcpp::SystemDefaultsQoS(),
-    [&completed_promise, &at_least_one_incomplete](
+    [&completed_promise, &at_least_one_incomplete, &fulfilled_promise](
       const rmf_task_msgs::msg::TaskSummary::SharedPtr msg)
     {
       if (msg->STATE_COMPLETED == msg->state)
-        completed_promise.set_value(true);
+      {
+        if (!fulfilled_promise)
+        {
+          fulfilled_promise = true;
+          completed_promise.set_value(true);
+        }
+      }
       else
         at_least_one_incomplete = true;
     });

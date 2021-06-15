@@ -110,7 +110,7 @@ void TaskManager::queue_task(std::shared_ptr<Task> task, Start expected_finish)
     msg.task_profile.task_id = _queue.back()->id();
     msg.state = msg.STATE_QUEUED;
     msg.robot_name = _context->name();
-    this->_context->node()->task_summary()->publish(msg);
+    _context->node()->task_summary()->publish(msg);
   }
 }
 
@@ -265,7 +265,7 @@ void TaskManager::set_queue(
         _queue.back()->deployment_time());
       msg.start_time = rmf_traffic_ros2::convert(
         _queue.back()->finish_state().finish_time());
-      this->_context->node()->task_summary()->publish(msg);
+      _context->node()->task_summary()->publish(msg);
     }
   }
 
@@ -342,20 +342,28 @@ void TaskManager::_begin_next_task()
     _task_sub = _active_task->observe()
       .observe_on(HERE, rxcpp::identity_same_worker(_context->worker()))
       .subscribe(HERE,
-      [this, id = _active_task->id()](Task::StatusMsg msg)
+      [me = weak_from_this(), id = _active_task->id()](Task::StatusMsg msg)
       {
+        const auto self = me.lock();
+        if (!self)
+          return;
+
         msg.task_id = id;
         msg.task_profile.task_id = id;
-        msg.robot_name = _context->name();
-        msg.fleet_name = _context->description().owner();
+        msg.robot_name = self->_context->name();
+        msg.fleet_name = self->_context->description().owner();
         msg.start_time = rmf_traffic_ros2::convert(
-          _active_task->deployment_time());
+          self->_active_task->deployment_time());
         msg.end_time = rmf_traffic_ros2::convert(
-          _active_task->finish_state().finish_time());
-        _context->node()->task_summary()->publish(msg);
+          self->_active_task->finish_state().finish_time());
+        self->_context->node()->task_summary()->publish(msg);
       },
-      [this, id = _active_task->id()](std::exception_ptr e)
+      [me = weak_from_this(), id = _active_task->id()](std::exception_ptr e)
       {
+        const auto self = me.lock();
+        if (!self)
+          return;
+
         rmf_task_msgs::msg::TaskSummary msg;
         msg.state = msg.STATE_FAILED;
 
@@ -370,29 +378,33 @@ void TaskManager::_begin_next_task()
 
         msg.task_id = id;
         msg.task_profile.task_id = id;
-        msg.robot_name = _context->name();
-        msg.fleet_name = _context->description().owner();
+        msg.robot_name = self->_context->name();
+        msg.fleet_name = self->_context->description().owner();
         msg.start_time = rmf_traffic_ros2::convert(
-          _active_task->deployment_time());
+          self->_active_task->deployment_time());
         msg.end_time = rmf_traffic_ros2::convert(
-          _active_task->finish_state().finish_time());
-        _context->node()->task_summary()->publish(msg);
+          self->_active_task->finish_state().finish_time());
+        self->_context->node()->task_summary()->publish(msg);
       },
-      [this, id = _active_task->id()]()
+      [me = weak_from_this(), id = _active_task->id()]()
       {
+        const auto self = me.lock();
+        if (!self)
+          return;
+
         rmf_task_msgs::msg::TaskSummary msg;
         msg.task_id = id;
         msg.task_profile.task_id = id;
         msg.state = msg.STATE_COMPLETED;
-        msg.robot_name = _context->name();
-        msg.fleet_name = _context->description().owner();
+        msg.robot_name = self->_context->name();
+        msg.fleet_name = self->_context->description().owner();
         msg.start_time = rmf_traffic_ros2::convert(
-          _active_task->deployment_time());
+          self->_active_task->deployment_time());
         msg.end_time = rmf_traffic_ros2::convert(
-          _active_task->finish_state().finish_time());
-        this->_context->node()->task_summary()->publish(msg);
+          self->_active_task->finish_state().finish_time());
+        self->_context->node()->task_summary()->publish(msg);
 
-        _active_task = nullptr;
+        self->_active_task = nullptr;
       });
 
     _active_task->begin();

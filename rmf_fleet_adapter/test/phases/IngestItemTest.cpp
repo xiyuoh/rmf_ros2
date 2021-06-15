@@ -139,19 +139,19 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       auto timer =
         data->ros_node->create_wall_timer(
           std::chrono::milliseconds(100),
-          [test, data = data, request_guid, result_pub, state_pub]()
+          [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {
             std::unique_lock<std::mutex> lk(test->m);
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::SUCCESS;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             IngestorState state;
             state.guid = request_guid;
             state.mode = IngestorState::IDLE;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state_pub->publish(state);
           });
 
@@ -178,19 +178,19 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       auto timer =
         data->ros_node->create_wall_timer(
           std::chrono::milliseconds(100),
-          [test, data = data, request_guid, result_pub, state_pub]()
+          [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {
             std::unique_lock<std::mutex> lk(test->m);
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::FAILED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             IngestorState state;
             state.guid = request_guid;
             state.mode = IngestorState::IDLE;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state_pub->publish(state);
           });
 
@@ -218,16 +218,16 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       rmf_rxcpp::subscription_guard interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe(HERE, [test, request_guid, data = data, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, request_guid, node = data->ros_node, result_pub, state_pub, target](const auto&)
           {
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::ACKNOWLEDGED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             IngestorState state;
-            state.time = data->ros_node->now();
+            state.time = node->now();
             state.guid = target;
             state.mode = IngestorState::BUSY;
             state_pub->publish(state);
@@ -254,12 +254,12 @@ SCENARIO_METHOD(MockAdapterFixture, "ingest item phase", "[phases]")
       rmf_rxcpp::subscription_guard interval =
         rxcpp::observable<>::interval(std::chrono::milliseconds(100))
         .subscribe_on(rxcpp::observe_on_new_thread())
-        .subscribe(HERE, [test, data = data, request_guid, result_pub, state_pub, target](const auto&)
+        .subscribe(HERE, [test, node = data->ros_node, request_guid, result_pub, state_pub, target](const auto&)
           {
             IngestorResult result;
             result.request_guid = request_guid;
             result.status = IngestorResult::ACKNOWLEDGED;
-            result.time = data->ros_node->now();
+            result.time = node->now();
             result_pub->publish(result);
 
             IngestorState state;

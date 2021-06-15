@@ -68,6 +68,10 @@ void Negotiate::operator()(const Subscriber& s)
   for (const auto& job : _queued_jobs)
     job->progress().options().maximum_cost_estimate(initial_max_cost);
 
+  // It's technically okay for us to capture `this` by value here because this
+  // lambda will only be used in the callback of _search_sub below, which will
+  // capture `this` instance by weak_ptr and lock that weak_ptr before
+  // attempting to call the check_if_finished lambda.
   auto check_if_finished = [this, s, N_jobs]() -> bool
     {
       if (_finished)
