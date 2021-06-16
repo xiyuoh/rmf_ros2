@@ -150,7 +150,7 @@ auto MockAdapterFixture::add_robot(
 
   RobotInfo info;
   info.command = std::make_shared<rmf_fleet_adapter_test::MockRobotCommand>(
-    data->adapter->node(), data->graph);
+    data->node, data->graph);
 
   bool was_robot_added_yet = false;
   std::size_t failures_to_add = 0;

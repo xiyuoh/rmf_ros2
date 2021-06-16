@@ -161,7 +161,7 @@ void GoToPlace::Active::respond(
 
   using namespace std::chrono_literals;
   const auto wait_duration = 2s + table_viewer->sequence().back().version * 10s;
-  auto negotiate_timer = _context->node()->create_wall_timer(
+  auto negotiate_timer = _context->node()->try_create_wall_timer(
     wait_duration,
     [s = negotiate->weak_from_this()]
     {
@@ -252,7 +252,7 @@ void GoToPlace::Active::find_plan()
     });
 
   // TODO(MXG): Make the timeout configurable
-  _find_path_timer = _context->node()->create_wall_timer(
+  _find_path_timer = _context->node()->try_create_wall_timer(
     std::chrono::seconds(10),
     [s = std::weak_ptr<services::FindPath>(_find_path_service),
     p = weak_from_this(),
@@ -311,7 +311,7 @@ void GoToPlace::Active::find_emergency_plan()
       phase->_pullover_service = nullptr;
     });
 
-  _find_pullover_timer = _context->node()->create_wall_timer(
+  _find_pullover_timer = _context->node()->try_create_wall_timer(
     std::chrono::seconds(10),
     [s = _pullover_service->weak_from_this(),
     p = weak_from_this(),

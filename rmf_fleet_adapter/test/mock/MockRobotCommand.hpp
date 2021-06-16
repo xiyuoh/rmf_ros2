@@ -21,7 +21,7 @@
 #include <rmf_fleet_adapter/agv/RobotCommandHandle.hpp>
 #include <rmf_fleet_adapter/agv/RobotUpdateHandle.hpp>
 
-#include <rclcpp/node.hpp>
+#include "../../src/rmf_fleet_adapter/agv/Node.hpp"
 
 namespace rmf_fleet_adapter_test {
 
@@ -66,7 +66,7 @@ public:
   MockRobotCommand(
     std::shared_ptr<rclcpp::Node> node,
     const rmf_traffic::agv::Graph& graph)
-  : _node(std::move(node))
+    : _node(std::dynamic_pointer_cast<rmf_fleet_adapter::agv::Node>(node))
   {
     for (std::size_t i = 0; i < graph.num_lanes(); ++i)
     {
@@ -89,7 +89,7 @@ public:
   {
     _current_waypoint_target = 0;
     _active = true;
-    _timer = _node->create_wall_timer(
+    _timer = _node->try_create_wall_timer(
       std::chrono::milliseconds(10),
       [me = weak_from_this(),
        waypoints,
@@ -184,7 +184,7 @@ public:
 private:
   bool _active = false;
   bool _pause = false;
-  std::shared_ptr<rclcpp::Node> _node;
+  std::shared_ptr<rmf_fleet_adapter::agv::Node> _node;
   rclcpp::TimerBase::SharedPtr _timer;
   std::size_t _current_waypoint_target = 0;
   std::unordered_map<std::string, std::size_t> _dockings;

@@ -1203,7 +1203,7 @@ FleetUpdateHandle& FleetUpdateHandle::fleet_state_publish_period(
 {
   if (value.has_value())
   {
-    _pimpl->fleet_state_timer = _pimpl->node->create_wall_timer(
+    _pimpl->fleet_state_timer = _pimpl->node->try_create_wall_timer(
       value.value(),
       [me = weak_from_this()]()
       {

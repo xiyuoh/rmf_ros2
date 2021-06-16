@@ -106,7 +106,7 @@ void RequestLift::ActivePhase::_init_obs()
           return;
 
         me->_do_publish();
-        me->_timer = me->_context->node()->create_wall_timer(
+        me->_timer = me->_context->node()->try_create_wall_timer(
           std::chrono::milliseconds(1000),
           [weak]()
           {
@@ -233,7 +233,7 @@ Task::StatusMsg RequestLift::ActivePhase::_get_status(
                   // Do nothing
                 });
 
-            _rewait_timer = _context->node()->create_wall_timer(
+            _rewait_timer = _context->node()->try_create_wall_timer(
               _context->get_lift_rewait_duration(),
               [w = weak_from_this()]()
               {

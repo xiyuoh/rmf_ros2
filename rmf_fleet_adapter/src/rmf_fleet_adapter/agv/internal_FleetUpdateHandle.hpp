@@ -206,12 +206,13 @@ public:
       Implementation{std::forward<Args>(args)...});
 
     handle->_pimpl->fleet_state_pub = handle->_pimpl->node->fleet_state();
-    handle->_pimpl->fleet_state_timer = handle->_pimpl->node->create_wall_timer(
-      std::chrono::seconds(1), [me = handle->weak_from_this()]()
-      {
-        if (const auto self = me.lock())
-          self->_pimpl->publish_fleet_state();
-      });
+    handle->_pimpl->fleet_state_timer =
+      handle->_pimpl->node->try_create_wall_timer(
+        std::chrono::seconds(1), [me = handle->weak_from_this()]()
+        {
+          if (const auto self = me.lock())
+            self->_pimpl->publish_fleet_state();
+        });
 
     // Create subs and pubs for bidding
     auto default_qos = rclcpp::SystemDefaultsQoS();

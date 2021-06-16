@@ -33,6 +33,8 @@
 #include <rmf_fleet_msgs/msg/robot_mode.hpp>
 #include <rmf_fleet_msgs/msg/location.hpp>
 
+#include <rclcpp/exceptions.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -1435,7 +1437,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::watch_for_ready(
   if (check_if_finished(checkpoint_id))
     return;
 
-  waiting_timer = node->create_wall_timer(
+  waiting_timer = node->try_create_wall_timer(
     std::chrono::seconds(1),
     [w = weak_from_this(), path_version, checkpoint_id]()
     {
@@ -1446,7 +1448,7 @@ void TrafficLight::UpdateHandle::Implementation::Data::watch_for_ready(
   if (check_if_ready(path_version, checkpoint_id))
     return;
 
-  ready_check_timer = node->create_wall_timer(
+  ready_check_timer = node->try_create_wall_timer(
     std::chrono::milliseconds(100),
     [w = weak_from_this(), path_version, checkpoint_id]()
     {
@@ -1814,7 +1816,8 @@ void TrafficLight::UpdateHandle::Implementation::Negotiator::respond(
 
   using namespace std::chrono_literals;
   const auto wait_duration = 2s + table_viewer->sequence().back().version * 10s;
-  auto negotiate_timer = data->node->create_wall_timer(
+
+  auto negotiate_timer = data-> node->try_create_wall_timer(
     wait_duration,
     [s = negotiate->weak_from_this()]()
     {
@@ -1870,7 +1873,7 @@ TrafficLight::UpdateHandle::Implementation::Implementation(
 {
   data->blockade = make_blockade(*blockade_writer, data->itinerary, this);
   data->fleet_state_pub = data->node->fleet_state();
-  data->fleet_state_timer = data->node->create_wall_timer(
+  data->fleet_state_timer = data-> node->try_create_wall_timer(
     std::chrono::seconds(1),
     [me = data->weak_from_this()]()
     {
@@ -1979,7 +1982,7 @@ auto TrafficLight::UpdateHandle::fleet_state_publish_period(
   if (value.has_value())
   {
     _pimpl->data->fleet_state_timer =
-      _pimpl->data->node->create_wall_timer(
+      _pimpl->data-> node->try_create_wall_timer(
       value.value(),
       [me = _pimpl->data->weak_from_this()]()
       {

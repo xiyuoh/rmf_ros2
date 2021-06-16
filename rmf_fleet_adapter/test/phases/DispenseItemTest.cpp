@@ -144,7 +144,7 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto state_pub = data->ros_node->create_publisher<DispenserState>(
         DispenserStateTopicName, 10);
       auto timer =
-        data->ros_node->create_wall_timer(
+        data->node->try_create_wall_timer(
           std::chrono::milliseconds(100),
           [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {
@@ -184,7 +184,7 @@ SCENARIO_METHOD(MockAdapterFixture, "dispense item phase", "[phases]")
       auto state_pub = data->ros_node->create_publisher<DispenserState>(
         DispenserStateTopicName, 10);
       auto timer =
-        data->ros_node->create_wall_timer(
+        data->node->try_create_wall_timer(
           std::chrono::milliseconds(100),
           [test, node = data->ros_node, request_guid, result_pub, state_pub]()
           {

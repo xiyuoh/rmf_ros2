@@ -107,6 +107,40 @@ public:
   using FleetStatePub = rclcpp::Publisher<FleetState>::SharedPtr;
   const FleetStatePub& fleet_state() const;
 
+  template <typename DurationRepT, typename DurationT, typename CallbackT>
+  rclcpp::TimerBase::SharedPtr try_create_wall_timer(
+    std::chrono::duration<DurationRepT, DurationT> period,
+    CallbackT callback)
+  {
+    // Race conditions with shutting down the ROS2 node may cause
+    // create_wall_timer to throw an exception. We'll catch that exception here
+    // so that the thread and process can wind down gracefully.
+    try
+    {
+      return create_wall_timer(period, std::move(callback));
+    }
+    catch (const rclcpp::exceptions::RCLError& e)
+    {
+      // RCL_RET_NOT_INIT will be given by rcl when trying to create a timer if
+      // either:
+      // 1. The node has not been initialized yet, or
+      // 2. The node's context has already been shutdown.
+      // Scenario (1) should not be possible because the rmf_fleet_adapter API
+      // does not allow a TrafficLight instance to be created before the node is
+      // initialized. Therefore we will assume scenario (2) here, in which case we
+      // will simply allow this exception to pass by us since the TrafficLight
+      // instance should be getting torn down soon.
+      //
+      // If the exception is being caused by anything else, then we should
+      // continue to throw it because we don't have a valid reason to expect any
+      // other
+      if (e.ret == RCL_RET_NOT_INIT)
+        return nullptr;
+
+      throw e;
+    }
+  }
+
 private:
 
   Node(

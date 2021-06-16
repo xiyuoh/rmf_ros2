@@ -139,7 +139,7 @@ SCENARIO_METHOD(MockAdapterFixture, "request lift phase", "[phases]")
       auto lift_state_pub = data->ros_node->create_publisher<LiftState>(
         LiftStateTopicName, 10);
       rclcpp::TimerBase::SharedPtr timer =
-        data->ros_node->create_wall_timer(
+        data->node->try_create_wall_timer(
           std::chrono::milliseconds(100),
           [test, node = data->ros_node, lift_name, destination, lift_state_pub]()
           {

@@ -54,7 +54,7 @@ TaskManagerPtr TaskManager::make(agv::RobotContextPtr context)
       }
     });
 
-  mgr->_task_timer = mgr->context()->node()->create_wall_timer(
+  mgr->_task_timer = mgr->context()->node()->try_create_wall_timer(
     std::chrono::seconds(1),
     [w = mgr->weak_from_this()]()
     {
@@ -64,7 +64,7 @@ TaskManagerPtr TaskManager::make(agv::RobotContextPtr context)
       }
     });
 
-  mgr->_retreat_timer = mgr->context()->node()->create_wall_timer(
+  mgr->_retreat_timer = mgr->context()->node()->try_create_wall_timer(
     std::chrono::seconds(10),
     [w = mgr->weak_from_this()]()
     {
