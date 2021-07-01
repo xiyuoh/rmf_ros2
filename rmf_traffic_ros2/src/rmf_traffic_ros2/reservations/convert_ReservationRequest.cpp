@@ -16,12 +16,12 @@
 */
 
 #include <rmf_traffic_ros2/reservations/ReservationRequests.hpp>
-#include <chrono>
 #include <rmf_traffic_ros2/Time.hpp>
+#include <chrono>
 
 namespace rmf_traffic_ros2 {
 
-//=============================================================================
+///=============================================================================
 rmf_traffic::reservations::ReservationRequest::TimeRange convert(
   rmf_traffic_msgs::msg::ReservationTimeRange request)
 {
