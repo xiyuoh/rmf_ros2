@@ -36,6 +36,12 @@
 
 #include <rmf_fleet_msgs/msg/fleet_state.hpp>
 
+#include <rmf_traffic_msgs/msg/reservation_requests.hpp>
+#include <rmf_traffic_msgs/msg/reservation_rollout.hpp>
+#include <rmf_traffic_msgs/msg/reservation_proposal.hpp>
+#include <rmf_traffic_msgs/msg/reservation_proposal_ack.hpp>
+#include <rmf_traffic_msgs/msg/reservation_proposal_rej.hpp>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -105,6 +111,31 @@ public:
   using FleetStatePub = rclcpp::Publisher<FleetState>::SharedPtr;
   const FleetStatePub& fleet_state() const;
 
+  using ReservationProposalAck = rmf_traffic_msgs::msg::ReservationProposalAck;
+  using ReservationAckPub =
+    rclcpp::Publisher<ReservationProposalAck>::SharedPtr;
+  const ReservationAckPub& acknowledge_reservation() const;
+
+  using ReservationProposalRej = rmf_traffic_msgs::msg::ReservationProposalRej;
+  using ReservationRejPub =
+    rclcpp::Publisher<ReservationProposalRej>::SharedPtr;
+  const ReservationRejPub& reject_reservation() const;
+
+  using ReservationProposal = rmf_traffic_msgs::msg::ReservationProposal;
+  using ReservationProposalObs =
+    rxcpp::observable<ReservationProposal::SharedPtr>;
+  const ReservationProposalObs& reservation_proposal() const;
+
+  using ReservationRollout = rmf_traffic_msgs::msg::ReservationRollout;
+  using ReservationRolloutObs =
+    rxcpp::observable<ReservationRollout::SharedPtr>;
+  const ReservationRolloutObs& reservation_rollout() const;
+
+  using ReservationRequests = rmf_traffic_msgs::msg::ReservationRequests;
+  using ReservationRequestsPub =
+    rclcpp::Publisher<ReservationRequests>::SharedPtr;
+  const ReservationRequestsPub& reservation_requests() const;
+
 private:
 
   Node(
@@ -126,7 +157,11 @@ private:
   IngestorResultObs _ingestor_result_obs;
   IngestorStateObs _ingestor_state_obs;
   FleetStatePub _fleet_state_pub;
-
+  ReservationAckPub _acknowledge_reservation_pub;
+  ReservationRejPub _reject_reservation_pub;
+  ReservationProposalObs _reservation_proposal_obs;
+  ReservationRolloutObs _reservation_rollout_obs;
+  ReservationRequestsPub _reservation_requests_pub;
 };
 
 } // namespace agv

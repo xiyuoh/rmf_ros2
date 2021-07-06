@@ -63,6 +63,19 @@ std::shared_ptr<Node> Node::make(
   node->_fleet_state_pub = node->create_publisher<FleetState>(
         FleetStateTopicName, default_qos);
 
+  // TODO: Reservation system needs QOS to be reliable
+  node->_reservation_proposal_obs = node->create_observable<ReservationProposal>(
+        rmf_traffic_ros2::ReservationProposalTopicName, default_qos);
+  node->_acknowledge_reservation_pub =
+      node->create_publisher<ReservationProposalAck>(
+        rmf_traffic_ros2::ReservationProposalAckTopicName, default_qos);
+  node->_reject_reservation_pub =
+      node->create_publisher<ReservationProposalRej>(
+        rmf_traffic_ros2::ReservationProposalRejTopicName, default_qos);
+  node->_reservation_rollout_obs = node->create_observable<ReservationRollout>(
+        rmf_traffic_ros2::ReservationRolloutTopicName, default_qos);
+  node->_reservation_requests_pub = node->create_publisher<ReservationRequests>(
+        rmf_traffic_ros2::ReservationRequestTopicName, default_qos);
   return node;
 }
 

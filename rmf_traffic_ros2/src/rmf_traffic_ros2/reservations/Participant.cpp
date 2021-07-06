@@ -83,6 +83,13 @@ bool Participant::unassign_request_proposal(
   return result.value() == ClientProposalStatus::ACCEPTED;
 }
 
+void Participant::notify_proposal_result(
+  int64_t proposal_version,
+  ClientProposalStatus status)
+{
+  proposal_acceptance.notify_mailbox(proposal_version, status);
+}
+
 Participant::Participant(
   ParticipantId participant_id,
   ProposalPub proposal_pub,

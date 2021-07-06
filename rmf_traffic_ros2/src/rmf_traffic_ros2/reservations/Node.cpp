@@ -40,6 +40,10 @@
 #include "ParticipantRegistry.hpp"
 namespace rmf_traffic_ros2 {
 
+/// \brief The ReservationManager node sits between the Reservation System's
+/// Database and the ros2 fleet adapter. It is responsible for managing the
+/// Reservation System's participants registration and the proposals made by
+/// the reservation system. 
 class ReservationManager : public rclcpp::Node
 {
   public:
@@ -111,15 +115,21 @@ class ReservationManager : public rclcpp::Node
     }
 
     void on_proposal_acceptance(
-      const rmf_traffic_msgs::msg::ReservationProposalAck::SharedPtr participant)
+      const rmf_traffic_msgs::msg::ReservationProposalAck::SharedPtr proposal)
     {
-      auto participant_handler = _registry.get(participant->participant_id);
+      auto participant_handler = _registry.get(proposal->participant_id);
+      participant_handler->notify_proposal_result(
+        proposal->proposalid,
+        Participant::ClientProposalStatus::ACCEPTED);
     }
 
     void on_proposal_rejection(
-      const rmf_traffic_msgs::msg::ReservationProposalRej::SharedPtr participant)
+      const rmf_traffic_msgs::msg::ReservationProposalRej::SharedPtr proposal)
     {
-
+      auto participant_handler = _registry.get(proposal->participant_id);
+      participant_handler->notify_proposal_result(
+        proposal->proposalid,
+        Participant::ClientProposalStatus::REJECTED);
     }
 
     void on_participant_register(
@@ -140,6 +150,7 @@ class ReservationManager : public rclcpp::Node
     void on_participant_heartbeat(
       const rmf_traffic_msgs::msg::ReservationParticipantHeartBeat::SharedPtr participant)
     {
+      // TODO:
       //registry.received_heartbeat(participant->participant_id);
     }
 

@@ -40,6 +40,11 @@ public:
   using RolloutMsg =
     rmf_traffic_msgs::msg::ReservationRollout;
 
+  enum ClientProposalStatus
+  {
+    ACCEPTED, REJECTED
+  };
+
   bool request_proposal(
     rmf_traffic::reservations::RequestId id,
     rmf_traffic::reservations::Reservation& res,
@@ -58,10 +63,8 @@ public:
     rmf_traffic::reservations::RequestId id,
     uint64_t proposal_version) override;
 
-  enum ClientProposalStatus
-  {
-    ACCEPTED, REJECTED
-  };
+  void notify_proposal_result(
+    int64_t proposal_version, ClientProposalStatus status);
 
   EventNotificationBus<uint64_t, ClientProposalStatus>
     proposal_acceptance;

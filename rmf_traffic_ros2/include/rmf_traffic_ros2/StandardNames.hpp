@@ -72,6 +72,8 @@ const std::string EmergencyTopicName = "fire_alarm_trigger";
 
 const std::string ReservationRequestTopicName = Prefix + "reservation_request";
 
+const std::string ReservationCancelTopicName = Prefix + "reservation_request";
+
 const std::string ReservationProposalTopicName = Prefix +
   "reservation_proposal";
 

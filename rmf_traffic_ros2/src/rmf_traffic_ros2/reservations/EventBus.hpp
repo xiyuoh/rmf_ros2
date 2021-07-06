@@ -64,7 +64,7 @@ public:
   {
     {
       std::lock_guard<std::mutex> guard(_lock[mailbox]);
-      _ready[mailbox].insert_or_assign({m});
+      _ready[mailbox] = m;
     }
     _condvars[mailbox].notify_all();
   }
