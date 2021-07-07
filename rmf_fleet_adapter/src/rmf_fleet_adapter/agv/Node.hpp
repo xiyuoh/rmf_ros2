@@ -41,6 +41,7 @@
 #include <rmf_traffic_msgs/msg/reservation_proposal.hpp>
 #include <rmf_traffic_msgs/msg/reservation_proposal_ack.hpp>
 #include <rmf_traffic_msgs/msg/reservation_proposal_rej.hpp>
+#include <rmf_traffic_msgs/msg/reservation_register_participant.hpp>
 
 namespace rmf_fleet_adapter {
 namespace agv {
@@ -136,6 +137,12 @@ public:
     rclcpp::Publisher<ReservationRequests>::SharedPtr;
   const ReservationRequestsPub& reservation_requests() const;
 
+  using ReservationRegister =
+    rmf_traffic_msgs::msg::ReservationRegisterParticipant;
+  using ReservationRegisterPub =
+    rclcpp::Publisher<ReservationRegister>::SharedPtr;
+  const ReservationRegisterPub& reservation_register() const;
+
 private:
 
   Node(
@@ -162,6 +169,7 @@ private:
   ReservationProposalObs _reservation_proposal_obs;
   ReservationRolloutObs _reservation_rollout_obs;
   ReservationRequestsPub _reservation_requests_pub;
+  ReservationRegisterPub _reservation_register_pub;
 };
 
 } // namespace agv

@@ -172,5 +172,40 @@ auto Node::fleet_state() const -> const FleetStatePub&
   return _fleet_state_pub;
 }
 
+//==============================================================================
+auto Node::acknowledge_reservation() const -> const ReservationAckPub&
+{
+  return _acknowledge_reservation_pub;
+}
+
+//==============================================================================
+auto Node::reject_reservation() const -> const ReservationRejPub&
+{
+  return _reject_reservation_pub;
+}
+
+//==============================================================================
+auto Node::reservation_proposal() const -> const ReservationProposalObs&
+{
+  return _reservation_proposal_obs;
+}
+
+//==============================================================================
+auto Node::reservation_rollout() const -> const ReservationRolloutObs&
+{
+  return _reservation_rollout_obs;
+}
+
+//==============================================================================
+auto Node::reservation_requests() const -> const ReservationRequestsPub&
+{
+  return _reservation_requests_pub;
+}
+
+//==============================================================================
+auto Node::reservation_register() const -> const ReservationRegisterPub&
+{
+  return _reservation_register_pub;
+}
 } // namespace agv
 } // namespace rmf_fleet_adapter
