@@ -15,59 +15,65 @@ ValetManager::ValetManager(
 {
   Node::ReservationRegister registrationMsg;
   registrationMsg.participant_id = id;
-  _node->reservation_register().publish(registrationMsg);
+  _node->reservation_register()->publish(registrationMsg);
   _reservation_proposal_observer = _node->reservation_proposal()
     .filter([weak = weak_from_this()]
-      (rmf_traffic::agv::ReservationProposal const& proposal) {
-      return proposal.participant_id == weak->_participant_id;
-    })
+      (rmf_traffic_msgs::msg::ReservationProposal const& proposal) -> bool
+      {
+        return proposal.participant == weak.lock()->_participant_id;
+      })
     .map([weak = weak_from_this()]
-      (rmf_traffic::agv::ReservationProposal const& proposal) {
+      (rmf_traffic_msgs::msg::ReservationProposal const& proposal) 
+      -> rmf_traffic_msgs::msg::ReservationProposal
+      {
+      auto me = weak.lock();
+      if(!me)
+        return proposal;
       // TODO perform some check if the proposal is valid
       // For now just assume the reservation is always valid.
-      Node::ReservationProposalAcl ackmsg;
-      ackmsg.participant_id = weak->_participant_id;
+      rmf_traffic_msgs::msg::ReservationProposalAck ackmsg;
+      ackmsg.participant_id = me->_participant_id;
       ackmsg.proposalid = proposal.proposalid;
-      auto me = weak.lock();
-      if(!me)
-        return;
       me->_node->acknowledge_reservation().publish(ackmsg);
       me->_pending_proposals.insert_or_assign(
+      {
+        proposal.proposalid,
+        PendingProposal
         {
+          proposal.requestid,
           proposal.proposalid,
-          PendingProposal
-          {
-            proposal.request_id,
-            proposal.proposal_id,
-            convert(proposal.reservation)
-          }
-        });
-      
+          rmf_traffic_ros2::convert(proposal.reservation)
+        }
+      });
+      return proposal;
     });
-  node->reservation_rollout.
+  _node->reservation_rollout()
     .filter([weak = weak_from_this()]
-      (rmf_traffic::agv::ReservationRollout const& rollout) {
-      return rollout.participant_id == weak->_participant_id;
-    })
+      (rmf_traffic_msgs::msg::ReservationRollout const& rollout) -> bool
+      {
+        return rollout.participant_id == weak.lock()->_participant_id;
+      })
     .map([weak = weak_from_this()]
-      (rmf_traffic::agv::ReservationRollout const& rollout) {
+      (rmf_traffic_msgs::msg::ReservationRollout const& rollout) 
+      -> rmf_traffic_msgs::msg::ReservationRollout
+      {
       auto me = weak.lock();
       if(!me)
-        return;
-      me->_request_to_proposal_id[proposal.requestid] = proposal.proposalid;
+        return rollout;
+      /*me->_request_to_proposal_id[proposal.requestid] = proposal.proposalid;
       if(me->_proposal_id_to_reservation_id.count(proposal.proposalid) != 0
       && me->_proposal_id_to_reservation_id[proposal.proposalid].has_value())
       {
         auto start = me->_proposal_id_to_reservation_id[proposal.proposalid]
           ->start_time();
-        auto proposal = me->_schedule.erase(start)
+        auto proposal = me->_schedule.erase(start);
       }
-      me->_proposal_id_to_reservation_id[proposal.proposalid] =
-        proposal.reservation;
+      me->_proposal_id_to_reservation[proposal.proposalid] =
+        proposal.reservation;*/
     });
 }
 
-ValetManager::request_destination(
+void ValetManager::request_destination(
   rmf_traffic::agv::Graph::Waypoint const& waypoint,
   rmf_traffic::Time const& time_to_reach,
   rmf_traffic::Duration const& time_to_wait
@@ -77,7 +83,7 @@ ValetManager::request_destination(
   //_node->
 }
 
-ValetManager::on_reservation_activated(
+void ValetManager::on_reservation_activated(
   std::function<void(rmf_traffic::reservations::Reservation const&)> callback)
 {
   _execute_reservation_callback = callback;

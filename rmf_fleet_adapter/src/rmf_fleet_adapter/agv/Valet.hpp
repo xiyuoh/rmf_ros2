@@ -1,8 +1,9 @@
 #ifndef SRC__RMF_FLEET_ADAPTER__VALET_HPP
 #define SRC__RMF_FLEET_ADAPTER__VALET_HPP
 
+#include <rmf_traffic/agv/Graph.hpp>
 #include <rmf_traffic_ros2/reservations/Reservation.hpp>
-#include <rmf_traffic_ros2/reservations/ReservationRequest.hpp>
+#include <rmf_traffic_ros2/reservations/ReservationRequests.hpp>
 #include "Node.hpp"
 
 namespace rmf_fleet_adapter {
@@ -28,8 +29,8 @@ public:
 private:
   std::shared_ptr<Node> _node;
   rmf_traffic::agv::Graph _graph;
-  ReservationProposalObs _reservation_proposal_observer;
-  ReservationRolloutObs _reservation_rollout_observer;
+  Node::ReservationProposalObs _reservation_proposal_observer;
+  Node::ReservationRolloutObs _reservation_rollout_observer;
   uint64_t _participant_id;
 
   std::vector<std::string> _parking_spots;
@@ -40,14 +41,14 @@ private:
       _proposal_id_to_reservations;
   std::map<rmf_traffic::Time, uint64_t> _schedule;
   
-  struct PendingProposals
+  struct PendingProposal
   {
     uint64_t request_id;
     uint64_t proposalid;
     std::optional<rmf_traffic::reservations::Reservation> reservation;
   };
   std::unordered_map<uint64_t, uint64_t> _pending_requests_to_proposal_id;
-  std::unordered_map<uint64_t, PendingProposals> _pending_proposals;
+  std::unordered_map<uint64_t, PendingProposal> _pending_proposals;
 
   enum CurrentState
   {
@@ -59,6 +60,8 @@ private:
 
   std::function<void(rmf_traffic::reservations::Reservation const&)>
     _execute_reservation_callback;
+
+  std::string _name;
 };
 
 }
