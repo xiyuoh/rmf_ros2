@@ -256,7 +256,7 @@ void TaskManager::set_queue(
 
         continue;
       }
-      
+
       rmf_task_msgs::msg::TaskProfile profile;
       const auto task_profile_it = profiles.find(request->id());
       if (task_profile_it == profiles.end())
@@ -497,7 +497,7 @@ void TaskManager::retreat_to_charger()
 
   const auto& constraints = task_planner->configuration().constraints();
   const double threshold_soc = constraints.threshold_soc();
-  const double retreat_threshold = 1.0 * threshold_soc; // safety factor
+  const double retreat_threshold = 1.2 * threshold_soc; // safety factor
   const double current_battery_soc = _context->current_battery_soc();
 
   const auto& parameters = task_planner->configuration().parameters();
@@ -563,7 +563,7 @@ void TaskManager::retreat_to_charger()
       current_state,
       constraints,
       estimate_cache);
-    
+
     if (!finish)
       return;
 
@@ -615,7 +615,7 @@ void TaskManager::_register_executed_task(const std::string& id)
   // a certain time window instead.
   if (_executed_task_registry.size() >= 100)
     _executed_task_registry.erase(_executed_task_registry.begin());
-  
+
   _executed_task_registry.push_back(id);
 }
 
