@@ -42,6 +42,8 @@ MoveRobot::ActivePhase::ActivePhase(
   _obs = make_cancellable(job, _cancel_subject.get_observable())
     .lift<Task::StatusMsg>(grab_while_active())
     .observe_on(rxcpp::identity_same_worker(_context->worker()));
+
+  _context->robot_mode(rmf_fleet_msgs::msg::RobotMode::MODE_MOVING);
 }
 
 //==============================================================================

@@ -237,7 +237,7 @@ RobotContext& RobotContext::current_battery_soc(const double battery_soc)
 {
   _current_battery_soc = battery_soc;
   _battery_soc_publisher.get_subscriber().on_next(battery_soc);
-  
+
   return *this;
 }
 
@@ -248,7 +248,7 @@ const rxcpp::observable<double>& RobotContext::observe_battery_soc() const
 }
 
 //==============================================================================
-const std::shared_ptr<const rmf_task::agv::TaskPlanner>& 
+const std::shared_ptr<const rmf_task::agv::TaskPlanner>&
 RobotContext::task_planner() const
 {
   return _task_planner;
@@ -283,6 +283,18 @@ RobotContext::get_lift_watchdog() const
 rmf_traffic::Duration RobotContext::get_lift_rewait_duration() const
 {
   return _lift_rewait_duration;
+}
+
+//==============================================================================
+rmf_fleet_msgs::msg::RobotMode RobotContext::robot_mode() const
+{
+  return _robot_mode;
+}
+
+//==============================================================================
+void RobotContext::robot_mode(uint32_t mode)
+{
+  _robot_mode.mode = mode;
 }
 
 //==============================================================================
@@ -335,6 +347,10 @@ RobotContext::RobotContext(
   _interrupt_obs = _interrupt_publisher.get_observable();
 
   _battery_soc_obs = _battery_soc_publisher.get_observable();
+
+  _robot_mode = rmf_fleet_msgs::build<rmf_fleet_msgs::msg::RobotMode>()
+      .mode(RobotMode::MODE_IDLE)
+      .mode_request_id(0);
 }
 
 } // namespace agv

@@ -5,6 +5,8 @@
 #include <rmf_fleet_adapter/agv/RobotUpdateHandle.hpp>
 #include <rmf_fleet_adapter/agv/FleetUpdateHandle.hpp>
 
+#include <rmf_fleet_msgs/msg/robot_mode.hpp>
+
 #include <rmf_traffic/schedule/Negotiator.hpp>
 #include <rmf_traffic/schedule/Participant.hpp>
 #include <rmf_traffic/schedule/Snapshot.hpp>
@@ -127,7 +129,7 @@ public:
   double current_battery_soc() const;
 
   /// Set the current battery state of charge. Note: This function also
-  /// publishes the battery soc via _battery_soc_publisher. 
+  /// publishes the battery soc via _battery_soc_publisher.
   RobotContext& current_battery_soc(const double battery_soc);
 
   // Get a reference to the battery soc observer of this robot.
@@ -147,6 +149,11 @@ public:
   const RobotUpdateHandle::Unstable::Watchdog& get_lift_watchdog() const;
 
   rmf_traffic::Duration get_lift_rewait_duration() const;
+
+  using RobotMode = rmf_fleet_msgs::msg::RobotMode;
+  void robot_mode(uint32_t mode);
+
+  RobotMode robot_mode() const;
 
 private:
   friend class FleetUpdateHandle;
@@ -192,6 +199,8 @@ private:
 
   RobotUpdateHandle::Unstable::Watchdog _lift_watchdog;
   rmf_traffic::Duration _lift_rewait_duration = std::chrono::seconds(0);
+
+  RobotMode _robot_mode;
 };
 
 using RobotContextPtr = std::shared_ptr<RobotContext>;

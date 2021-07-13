@@ -33,6 +33,9 @@ DockRobot::ActivePhase::ActivePhase(
 
   _action = std::make_shared<Action>(this);
   _obs = rmf_rxcpp::make_job<Task::StatusMsg>(_action);
+
+  _context->robot_mode(rmf_fleet_msgs::msg::RobotMode::MODE_DOCKING);
+
 }
 
 //==============================================================================

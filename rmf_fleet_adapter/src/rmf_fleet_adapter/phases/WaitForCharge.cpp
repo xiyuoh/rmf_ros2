@@ -33,7 +33,7 @@ rmf_traffic::Duration WaitForCharge::Active::estimate_remaining_time() const
   const double charging_current = _battery_system.charging_current();
   const double time_estimate =
       3600.0 * capacity * (_charge_to_soc - _context->current_battery_soc()) / charging_current;
-  
+
   return rmf_traffic::time::from_seconds(time_estimate);
 }
 
@@ -86,6 +86,8 @@ WaitForCharge::Active::Active(
       .get_observable()
       .start_with(initial_msg);
 
+  _context->robot_mode(rmf_fleet_msgs::msg::RobotMode::MODE_CHARGING);
+
 }
 
 //==============================================================================
@@ -123,7 +125,7 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
           if (std::chrono::seconds(60) <= now - active->_last_update_time)
           {
             const double delta_soc = battery_soc - active->_initial_battery_soc;
-            const double elapsed_seconds = 
+            const double elapsed_seconds =
               (now - active->_start_time).count() / 1e9;
             const double average_charging_rate =
               100.0 * delta_soc / (elapsed_seconds / 3600.0);
@@ -140,7 +142,7 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
               battery_soc * 100,
               average_charging_rate,
               active->_expected_charging_rate);
-            
+
             active->_last_update_time = now;
           }
 
@@ -187,7 +189,7 @@ auto WaitForCharge::make(
   const double charging_current = battery_system.charging_current();
   const double time_estimate =
     3600.0 * capacity * (charge_to_soc - context->current_battery_soc()) / charging_current;
-  
+
   return std::unique_ptr<Pending>(
         new Pending(context, battery_system, charge_to_soc, time_estimate));
 }

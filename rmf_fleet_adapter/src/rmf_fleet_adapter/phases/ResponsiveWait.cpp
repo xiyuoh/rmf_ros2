@@ -80,6 +80,7 @@ ResponsiveWait::Active::Active(PhaseInfo info)
 : _info(std::move(info))
 {
   _status_obs = _status_publisher.get_observable();
+  _info.context->robot_mode(rmf_fleet_msgs::msg::RobotMode::MODE_IDLE);
 }
 
 //==============================================================================

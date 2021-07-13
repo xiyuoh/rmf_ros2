@@ -35,7 +35,7 @@
 #include <rmf_task/requests/Loop.hpp>
 
 #include <rmf_task_msgs/msg/clean.hpp>
-#include <rmf_task_msgs/msg/delivery.hpp> 
+#include <rmf_task_msgs/msg/delivery.hpp>
 #include <rmf_task_msgs/msg/loop.hpp>
 
 #include <sstream>
@@ -164,7 +164,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
   rmf_task::ConstRequestPtr new_request = nullptr;
   const auto& task_profile = msg->task_profile;
   const auto& task_type = task_profile.description.task_type;
-  const rmf_traffic::Time start_time = 
+  const rmf_traffic::Time start_time =
     rmf_traffic_ros2::convert(task_profile.description.start_time);
   // TODO (YV) get rid of ID field in RequestPtr
   std::string id = msg->task_profile.task_id;
@@ -191,7 +191,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
     }
 
     // Check for valid start waypoint
-    const std::string start_wp_name = 
+    const std::string start_wp_name =
       task_profile.description.clean.start_waypoint;
     const auto start_wp = graph.find_waypoint(start_wp_name);
     if (!start_wp)
@@ -241,14 +241,14 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
         (*planner)->get_configuration().vehicle_traits(),
         start_time,
         positions);
-    
+
     if (cleaning_trajectory.size() == 0)
     {
       RCLCPP_INFO(
         node->get_logger(),
         "Unable to generate cleaning trajectory from positions specified "
         " in DockSummary msg for [%s]", start_wp_name.c_str());
-      
+
       return;
     }
 
@@ -436,7 +436,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
 
     return;
   }
-  
+
   if (!new_request)
     return;
   generated_requests.insert({id, new_request});
@@ -445,7 +445,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
 
   if (!allocation_result.has_value())
     return;
-  
+
   const auto& assignments = allocation_result.value();
 
   const double cost = task_planner->compute_cost(assignments);
@@ -465,8 +465,8 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
       const rmf_traffic::Time finish_time = s.finish_time();
       const double finish_seconds = finish_time.time_since_epoch().count();
       debug_stream << "    <" << a.request()->id() << ": " << request_seconds
-                << ", " << start_seconds 
-                << ", "<< finish_seconds << ", " << 100* s.battery_soc() 
+                << ", " << start_seconds
+                << ", "<< finish_seconds << ", " << 100* s.battery_soc()
                 << "%>" << std::endl;
     }
   }
@@ -480,7 +480,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
   bid_proposal.task_profile = task_profile;
   bid_proposal.prev_cost = current_assignment_cost;
   bid_proposal.new_cost = cost;
-  
+
   // Map robot index to name to populate robot_name in BidProposal
   std::unordered_map<std::size_t, std::string> robot_name_map;
   std::size_t index = 0;
@@ -549,7 +549,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
       id.c_str(), name.c_str());
 
     auto& assignments = task_it->second;
-    
+
     if (assignments.size() != task_managers.size())
     {
       RCLCPP_ERROR(
@@ -561,7 +561,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
     }
 
     // Here we make sure none of the tasks in the assignments has already begun
-    // execution. If so, we replan assignments until a valid set is obtained 
+    // execution. If so, we replan assignments until a valid set is obtained
     // and only then update the task manager queues
     const auto request_it = generated_requests.find(id);
     if (request_it == generated_requests.end())
@@ -571,7 +571,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
         "Unable to find generated request for task_id:[%s]. This request will "
         "be ignored.",
         id.c_str());
-      dispatch_ack_pub->publish(dispatch_ack); 
+      dispatch_ack_pub->publish(dispatch_ack);
       return;
     }
 
@@ -611,7 +611,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
     assigned_requests.insert({id, request_it->second});
     dispatch_ack.success = true;
     dispatch_ack_pub->publish(dispatch_ack);
-  
+
     RCLCPP_INFO(
       node->get_logger(),
       "Assignments updated for robots in fleet [%s] to accommodate task_id:[%s]",
@@ -669,12 +669,12 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
 
       dispatch_ack_pub->publish(dispatch_ack);
       return;
-    }  
+    }
 
     // Re-plan assignments while ignoring request for task to be cancelled
     const auto replan_results = allocate_tasks(
       nullptr, request_to_cancel_it->second);
-    
+
     if (!replan_results.has_value())
     {
       RCLCPP_WARN(
@@ -682,7 +682,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
         "Unable to re-plan assignments when cancelling task with task_id:[%s]",
         id.c_str());
 
-      dispatch_ack_pub->publish(dispatch_ack);  
+      dispatch_ack_pub->publish(dispatch_ack);
       return;
     }
 
@@ -699,7 +699,7 @@ void FleetUpdateHandle::Implementation::dispatch_request_cb(
     dispatch_ack.success = true;
     dispatch_ack_pub->publish(dispatch_ack);
     cancelled_task_ids.insert(id);
-  
+
     RCLCPP_INFO(
       node->get_logger(),
       "Task with task_id:[%s] has successfully been cancelled. Assignments "
@@ -790,7 +790,7 @@ rmf_fleet_msgs::msg::RobotState convert_state(const TaskManager& mgr)
   // TODO(MXG): We could be smarter about what mode we report
   auto mode = rmf_fleet_msgs::build<rmf_fleet_msgs::msg::RobotMode>()
       .mode(mgr.current_task()?
-              rmf_fleet_msgs::msg::RobotMode::MODE_MOVING
+              context.robot_mode().mode
             : rmf_fleet_msgs::msg::RobotMode::MODE_IDLE)
       // NOTE(MXG): This field is currently only used by the fleet drivers.
       // For now, we will just fill it with a zero.
@@ -861,7 +861,7 @@ auto FleetUpdateHandle::Implementation::allocate_tasks(
   rmf_task::ConstRequestPtr new_request,
   rmf_task::ConstRequestPtr ignore_request) const -> std::optional<Assignments>
 {
-  // Collate robot states, constraints and combine new requestptr with 
+  // Collate robot states, constraints and combine new requestptr with
   // requestptr of non-charging tasks in task manager queues
   std::vector<rmf_task::agv::State> states;
   std::vector<rmf_task::ConstRequestPtr> pending_requests;
@@ -909,8 +909,8 @@ auto FleetUpdateHandle::Implementation::allocate_tasks(
   }
 
   RCLCPP_INFO(
-    node->get_logger(), 
-    "Planning for [%d] robot(s) and [%d] request(s)", 
+    node->get_logger(),
+    "Planning for [%d] robot(s) and [%d] request(s)",
     states.size(), pending_requests.size());
 
   // Generate new task assignments
@@ -981,7 +981,7 @@ void FleetUpdateHandle::add_robot(
     rmf_traffic::agv::Plan::StartSet start,
     std::function<void(std::shared_ptr<RobotUpdateHandle>)> handle_cb)
 {
-  
+
   if (start.empty())
   {
     throw std::runtime_error(
@@ -1006,7 +1006,7 @@ void FleetUpdateHandle::add_robot(
         rmf_traffic::schedule::Participant participant)
   {
     const auto charger_wp = fleet->_pimpl->get_nearest_charger(start[0]);
-    
+
     if (!charger_wp.has_value())
     {
       throw std::runtime_error(
@@ -1229,7 +1229,7 @@ bool FleetUpdateHandle::set_task_planner_params(
     // Here we update the task planner in all the RobotContexts.
     // The TaskManagers rely on the parameters in the task planner for
     // automatic retreat. Hence, we also update them whenever the
-    // task planner here is updated. 
+    // task planner here is updated.
     for (const auto& t : _pimpl->task_managers)
       t.first->task_planner(_pimpl->task_planner);
 
