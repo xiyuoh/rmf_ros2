@@ -99,12 +99,12 @@ public:
 
   // Make a new task
   static std::shared_ptr<Task> make(
-      std::string id,
-      PendingPhases phases,
-      rxcpp::schedulers::worker worker,
-      rmf_traffic::Time deployment_time,
-      rmf_task::agv::State finish_state,
-      rmf_task::ConstRequestPtr request);
+    std::string id,
+    PendingPhases phases,
+    rxcpp::schedulers::worker worker,
+    rmf_traffic::Time deployment_time,
+    rmf_task::agv::State finish_state,
+    rmf_task::ConstRequestPtr request);
 
   void begin();
 
@@ -143,12 +143,12 @@ public:
 private:
 
   Task(
-      std::string id,
-      PendingPhases phases,
-      rxcpp::schedulers::worker worker,
-      rmf_traffic::Time deployment_time,
-      rmf_task::agv::State finish_state,
-      rmf_task::ConstRequestPtr request);
+    std::string id,
+    PendingPhases phases,
+    rxcpp::schedulers::worker worker,
+    rmf_traffic::Time deployment_time,
+    rmf_task::agv::State finish_state,
+    rmf_task::ConstRequestPtr request);
 
   std::string _id;
 

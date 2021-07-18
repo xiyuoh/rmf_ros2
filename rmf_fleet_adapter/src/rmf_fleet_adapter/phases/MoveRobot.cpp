@@ -39,15 +39,17 @@ MoveRobot::ActivePhase::ActivePhase(
     _context, waypoints, _tail_period);
 
   auto job = rmf_rxcpp::make_job<Task::StatusMsg>(_action);
+
   _obs = make_cancellable(job, _cancel_subject.get_observable())
     .lift<Task::StatusMsg>(grab_while_active())
     .observe_on(rxcpp::identity_same_worker(_context->worker()));
 
-  _context->robot_mode(rmf_fleet_msgs::msg::RobotMode::MODE_MOVING);
+  _context->current_mode(rmf_fleet_msgs::msg::RobotMode::MODE_MOVING);
 }
 
 //==============================================================================
-const rxcpp::observable<Task::StatusMsg>& MoveRobot::ActivePhase::observe() const
+const rxcpp::observable<Task::StatusMsg>& MoveRobot::ActivePhase::observe()
+const
 {
   return _obs;
 }
@@ -118,9 +120,9 @@ MoveRobot::Action::Action(
   agv::RobotContextPtr& context,
   std::vector<rmf_traffic::agv::Plan::Waypoint>& waypoints,
   std::optional<rmf_traffic::Duration> tail_period)
-  : _context{context},
-    _waypoints{waypoints},
-    _tail_period{tail_period}
+: _context{context},
+  _waypoints{waypoints},
+  _tail_period{tail_period}
 {
   // no op
 }

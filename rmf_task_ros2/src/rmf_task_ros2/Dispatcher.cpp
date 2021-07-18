@@ -18,6 +18,7 @@
 #include <rmf_task_ros2/Dispatcher.hpp>
 
 #include <rclcpp/node.hpp>
+#include <rclcpp/executors/single_threaded_executor.hpp>
 
 #include "action/Client.hpp"
 
@@ -60,6 +61,9 @@ public:
   StatusCallback on_change_fn;
 
   std::queue<bidding::BidNotice> queue_bidding_tasks;
+
+  /// TODO: should rename "active" to "ongoing" to prevent confusion
+  /// of with task STATE_ACTIVE
   DispatchTasks active_dispatch_tasks;
   DispatchTasks terminal_dispatch_tasks;
   std::size_t task_counter = 0; // index for generating task_id
@@ -193,7 +197,7 @@ public:
 
     if (!task_type_name.count(task_type))
     {
-      RCLCPP_ERROR(node->get_logger(), "TaskType: %d is invalid", task_type);
+      RCLCPP_ERROR(node->get_logger(), "TaskType: %ld is invalid", task_type);
       return std::nullopt;
     }
 
@@ -523,7 +527,11 @@ std::shared_ptr<rclcpp::Node> Dispatcher::node()
 //==============================================================================
 void Dispatcher::spin()
 {
-  rclcpp::spin(_pimpl->node);
+  rclcpp::ExecutorOptions options;
+  options.context = _pimpl->node->get_node_options().context();
+  rclcpp::executors::SingleThreadedExecutor executor(options);
+  executor.add_node(_pimpl->node);
+  executor.spin();
 }
 
 //==============================================================================

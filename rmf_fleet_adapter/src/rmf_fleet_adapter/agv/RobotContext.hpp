@@ -29,8 +29,8 @@ namespace agv {
 
 //==============================================================================
 class RobotContext
-    : public std::enable_shared_from_this<RobotContext>,
-      public rmf_traffic::schedule::Negotiator
+  : public std::enable_shared_from_this<RobotContext>,
+  public rmf_traffic::schedule::Negotiator
 {
 public:
 
@@ -90,9 +90,9 @@ public:
   /// Hold onto the returned subscription to remain the negotiator for this
   /// robot.
   std::shared_ptr<NegotiatorLicense> set_negotiator(
-      rmf_traffic::schedule::Negotiator* negotiator);
+    rmf_traffic::schedule::Negotiator* negotiator);
 
-  struct Empty { };
+  struct Empty {};
   const rxcpp::observable<Empty>& observe_interrupt() const;
 
   void trigger_interrupt();
@@ -115,8 +115,8 @@ public:
 
   // Documentation inherited from rmf_traffic::schedule::Negotiator
   void respond(
-      const TableViewerPtr& table_viewer,
-      const ResponderPtr& responder) final;
+    const TableViewerPtr& table_viewer,
+    const ResponderPtr& responder) final;
 
   /// Set the state of this robot at the end of its current task
   RobotContext& current_task_end_state(const rmf_task::agv::State& state);
@@ -150,10 +150,12 @@ public:
 
   rmf_traffic::Duration get_lift_rewait_duration() const;
 
-  using RobotMode = rmf_fleet_msgs::msg::RobotMode;
-  void robot_mode(uint32_t mode);
+  /// Set the current mode of the robot. This mode should correspond to a
+  /// constant in the RobotMode message
+  void current_mode(uint32_t mode);
 
-  RobotMode robot_mode() const;
+  /// Return the current mode of the robot
+  uint32_t current_mode() const;
 
 private:
   friend class FleetUpdateHandle;
@@ -200,7 +202,8 @@ private:
   RobotUpdateHandle::Unstable::Watchdog _lift_watchdog;
   rmf_traffic::Duration _lift_rewait_duration = std::chrono::seconds(0);
 
-  RobotMode _robot_mode;
+  // Mode value for RobotMode message
+  uint32_t _current_mode;
 };
 
 using RobotContextPtr = std::shared_ptr<RobotContext>;
