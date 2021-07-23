@@ -158,13 +158,6 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
         const double average_charging_rate =
         100.0 * delta_soc / (elapsed_seconds / 3600.0);
 
-        if (delta_soc <= 0)
-        {
-          // Publish a charger request
-          const auto msg = generate_charger_request(*active->_context);
-          active->_context->node()->charger_request()->publish(msg);
-        }
-
         RCLCPP_INFO(
           active->_context->node()->get_logger(),
           "Robot [%s] is still waiting for its battery to charge to %.1f%%. "
