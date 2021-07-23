@@ -91,6 +91,10 @@ std::shared_ptr<Node> Node::make(
     node->create_publisher<FleetState>(
     FleetStateTopicName, default_qos);
 
+  node->_charger_request_pub =
+    node->create_publisher<ChargerRequest>(
+    ChargerRequestTopicName, default_qos);
+
   return node;
 }
 
@@ -185,6 +189,12 @@ auto Node::ingestor_state() const -> const IngestorStateObs&
 auto Node::fleet_state() const -> const FleetStatePub&
 {
   return _fleet_state_pub;
+}
+
+//==============================================================================
+auto Node::charger_request() const -> const ChargerRequestPub&
+{
+  return _charger_request_pub;
 }
 
 } // namespace agv

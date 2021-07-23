@@ -31,6 +31,7 @@ set(dep_pkgs
   rmf_fleet_msgs
   rmf_lift_msgs
   rmf_task_msgs
+  rmf_charger_msgs
   rmf_traffic
   rmf_traffic_ros2
   rmf_battery
@@ -80,6 +81,7 @@ target_link_libraries(rmf_fleet_adapter
     ${rmf_lift_msgs_LIBRARIES}
     ${rmf_dispenser_msgs_LIBRARIES}
     ${rmf_ingestor_msgs_LIBRARIES}
+    ${rmf_charger_msgs_LIBRARIES}
 )
 
 target_include_directories(rmf_fleet_adapter
@@ -96,6 +98,7 @@ target_include_directories(rmf_fleet_adapter
     ${rmf_lift_msgs_INCLUDE_DIRS}
     ${rmf_dispenser_msgs_INCLUDE_DIRS}
     ${rmf_ingestor_msgs_INCLUDE_DIRS}
+    ${rmf_charger_msgs_INCLUDE_DIRS}
 )
 
 if (BUILD_TESTING)
@@ -130,6 +133,7 @@ if (BUILD_TESTING)
       ${rmf_lift_msgs_INCLUDE_DIRS}
       ${rmf_dispenser_msgs_INCLUDE_DIRS}
       ${rmf_ingestor_msgs_INCLUDE_DIRS}
+      ${rmf_charger_msgs_INCLUDE_DIRS}
       ${std_msgs_INCLUDE_DIRS}
   )
   target_link_libraries(test_rmf_fleet_adapter
@@ -141,6 +145,7 @@ if (BUILD_TESTING)
       ${rmf_lift_msgs_LIBRARIES}
       ${rmf_dispenser_msgs_LIBRARIES}
       ${rmf_ingestor_msgs_LIBRARIES}
+      ${rmf_charger_msgs_LIBRARIES}
       rmf_fleet_adapter
       rmf_utils::rmf_utils
       ${std_msgs_LIBRARIES}

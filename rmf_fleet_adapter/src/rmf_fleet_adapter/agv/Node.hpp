@@ -33,8 +33,8 @@
 #include <rmf_lift_msgs/msg/lift_state.hpp>
 #include <rmf_task_msgs/msg/task_summary.hpp>
 #include <std_msgs/msg/bool.hpp>
-
 #include <rmf_fleet_msgs/msg/fleet_state.hpp>
+#include <rmf_charger_msgs/msg/charger_request.hpp>
 
 namespace rmf_fleet_adapter {
 namespace agv {
@@ -105,6 +105,10 @@ public:
   using FleetStatePub = rclcpp::Publisher<FleetState>::SharedPtr;
   const FleetStatePub& fleet_state() const;
 
+  using ChargerRequest = rmf_charger_msgs::msg::ChargerRequest;
+  using ChargerRequestPub = rclcpp::Publisher<ChargerRequest>::SharedPtr;
+  const ChargerRequestPub& charger_request() const;
+
   template<typename DurationRepT, typename DurationT, typename CallbackT>
   rclcpp::TimerBase::SharedPtr try_create_wall_timer(
     std::chrono::duration<DurationRepT, DurationT> period,
@@ -160,6 +164,7 @@ private:
   Bridge<IngestorResult> _ingestor_result_obs;
   Bridge<IngestorState> _ingestor_state_obs;
   FleetStatePub _fleet_state_pub;
+  ChargerRequestPub _charger_request_pub;
 };
 
 } // namespace agv

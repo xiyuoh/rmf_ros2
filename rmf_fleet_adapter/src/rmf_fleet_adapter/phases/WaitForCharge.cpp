@@ -17,8 +17,31 @@
 
 #include "WaitForCharge.hpp"
 
+#include <rmf_charger_msgs/msg/charger_request.hpp>
+
 namespace rmf_fleet_adapter {
 namespace phases {
+
+//==============================================================================
+namespace {
+
+rmf_charger_msgs::msg::ChargerRequest generate_charger_request(
+  const agv::RobotContext& context)
+{
+  const auto& graph = context.navigation_graph();
+  auto charging_waypoint = graph.get_waypoint(
+    context.current_task_end_state().charging_waypoint());
+  const auto charger_name = charging_waypoint.name();
+  rmf_charger_msgs::msg::ChargerRequest msg;
+  msg.charger_name = charger_name == nullptr ? "" : *charger_name;
+  msg.fleet_name = context.description().owner();
+  msg.robot_name = context.name();
+  msg.request_id = msg.robot_name;
+
+  return msg;
+}
+
+} // anonymous namespace
 
 //==============================================================================
 auto WaitForCharge::Active::observe() const
@@ -100,6 +123,10 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
     std::shared_ptr<Active>(new Active(
         _context, _battery_system, _charge_to_soc, now));
 
+  // Publish a charger request
+  const auto msg = generate_charger_request(*_context);
+  _context->node()->charger_request()->publish(msg);
+
   RCLCPP_INFO(
     _context->node()->get_logger(),
     "Robot [%s] has begun waiting for its battery to charge to %.1f%%. "
@@ -130,6 +157,13 @@ std::shared_ptr<Task::ActivePhase> WaitForCharge::Pending::begin()
         (now - active->_start_time).count() / 1e9;
         const double average_charging_rate =
         100.0 * delta_soc / (elapsed_seconds / 3600.0);
+
+        if (delta_soc <= 0)
+        {
+          // Publish a charger request
+          const auto msg = generate_charger_request(*active->_context);
+          active->_context->node()->charger_request()->publish(msg);
+        }
 
         RCLCPP_INFO(
           active->_context->node()->get_logger(),
