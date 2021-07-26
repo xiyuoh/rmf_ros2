@@ -143,6 +143,7 @@ public:
   std::shared_ptr<rmf_task::CostCalculator> cost_calculator =
     rmf_task::BinaryPriorityScheme::make_cost_calculator();
   std::shared_ptr<rmf_task::agv::TaskPlanner> task_planner = nullptr;
+  rmf_task::ConstRequestFactoryPtr finishing_request = nullptr;
 
   rmf_utils::optional<rmf_traffic::Duration> default_maximum_delay =
     std::chrono::nanoseconds(std::chrono::seconds(10));
@@ -177,8 +178,9 @@ public:
     std::string, rmf_task::ConstRequestPtr> assigned_requests = {};
   std::unordered_set<std::string> cancelled_task_ids = {};
 
-  std::unordered_map<std::string, rmf_task_msgs::msg::TaskProfile> task_profile_map = {};
-  
+  std::unordered_map<std::string,
+    rmf_task_msgs::msg::TaskProfile> task_profile_map = {};
+
   AcceptTaskRequest accept_task = nullptr;
 
   using BidNotice = rmf_task_msgs::msg::BidNotice;
