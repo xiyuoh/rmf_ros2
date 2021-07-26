@@ -18,6 +18,8 @@
 #include <rmf_battery/agv/SimpleMotionPowerSink.hpp>
 #include <rmf_battery/agv/SimpleDevicePowerSink.hpp>
 
+#include <rmf_task/requests/factory/ReturnToChargerFactory.hpp>
+
 namespace py = pybind11;
 namespace agv = rmf_fleet_adapter::agv;
 namespace battery = rmf_battery::agv;
@@ -161,8 +163,16 @@ PYBIND11_MODULE(rmf_adapter, m) {
     battery::SimpleDevicePowerSink& t_sink,
     double recharge_threshold,
     double recharge_soc,
-    bool account_for_battery_drain)
+    bool account_for_battery_drain,
+    bool finishing = false)
     {
+      rmf_task::ConstRequestFactoryPtr finishing_request = nullptr;
+      if (finishing)
+      {
+        finishing_request =
+          std::make_shared<rmf_task::requests::ReturnToChargerFactory>();
+      }
+      
       return self.set_task_planner_params(
         std::make_shared<battery::BatterySystem>(b_sys),
         std::make_shared<battery::SimpleMotionPowerSink>(m_sink),
@@ -170,7 +180,8 @@ PYBIND11_MODULE(rmf_adapter, m) {
         std::make_shared<battery::SimpleDevicePowerSink>(t_sink),
         recharge_threshold,
         recharge_soc,
-        account_for_battery_drain);
+        account_for_battery_drain,
+        finishing_request);
     },
     py::arg("battery_system"),
     py::arg("motion_sink"),
@@ -178,7 +189,8 @@ PYBIND11_MODULE(rmf_adapter, m) {
     py::arg("tool_sink"),
     py::arg("recharge_threshold"),
     py::arg("recharge_soc"),
-    py::arg("account_for_battery_drain"))
+    py::arg("account_for_battery_drain"),
+    py::arg("finishing") = false)
   .def("accept_delivery_requests",
     &agv::FleetUpdateHandle::accept_delivery_requests,
     "NOTE: deprecated, use accept_task_reqeusts() instead")

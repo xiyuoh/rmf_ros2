@@ -23,6 +23,7 @@ find_package(rmf_fleet_adapter REQUIRED)
 find_package(rmf_task REQUIRED)
 find_package(rmf_battery REQUIRED)
 find_package(rmf_task_msgs REQUIRED)
+find_package(rmf_task REQUIRED)
 
 include_directories(
   include
