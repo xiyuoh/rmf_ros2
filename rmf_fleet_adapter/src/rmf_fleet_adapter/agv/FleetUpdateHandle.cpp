@@ -453,6 +453,7 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
 
   // Display computed assignments for debugging
   std::stringstream debug_stream;
+  debug_stream << std::fixed;
   debug_stream << "Cost: " << cost << std::endl;
   for (std::size_t i = 0; i < assignments.size(); ++i)
   {
@@ -461,11 +462,11 @@ void FleetUpdateHandle::Implementation::bid_notice_cb(
     {
       const auto& s = a.state();
       const double request_seconds =
-        a.request()->earliest_start_time().time_since_epoch().count()/1e9;
+        a.request()->earliest_start_time().time_since_epoch().count();
       const double start_seconds =
-        a.deployment_time().time_since_epoch().count()/1e9;
+        a.deployment_time().time_since_epoch().count();
       const rmf_traffic::Time finish_time = s.finish_time();
-      const double finish_seconds = finish_time.time_since_epoch().count()/1e9;
+      const double finish_seconds = finish_time.time_since_epoch().count();
       debug_stream << "    <" << a.request()->id() << ": " << request_seconds
                    << ", " << start_seconds
                    << ", "<< finish_seconds << ", " << 100* s.battery_soc()
