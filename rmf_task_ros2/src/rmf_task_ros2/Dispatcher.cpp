@@ -98,7 +98,7 @@ public:
     publish_active_tasks_period =
       node->declare_parameter<int>("publish_active_tasks_period", 1);
     RCLCPP_INFO(node->get_logger(),
-      " Declared PUblish_active_tasks_period as: %f secs", 
+      " Declared PUblish_active_tasks_period as: %f secs",
       publish_active_tasks_period);
 
     const auto qos = rclcpp::ServicesQoS().reliable();
@@ -109,9 +109,9 @@ public:
       rmf_task_ros2::FilteredTaskStatusTopicName, qos);
 
     timer = node->create_wall_timer(
-        std::chrono::seconds(publish_active_tasks_period), [&]()
+      std::chrono::seconds(publish_active_tasks_period), [&]()
       {
-        TasksMsg task_msgs; 
+        TasksMsg task_msgs;
         for (auto task : (this->active_dispatch_tasks))
         {
           // task_msgs.tasks.push_back(
@@ -203,7 +203,8 @@ public:
     }
 
     // auto generate a task_id for a given submitted task
-    submitted_task.task_id =
+    submitted_task.task_id = task_type == 4 ? description.clean.start_waypoint +
+      + "-" + std::to_string(task_counter++) :
       task_type_name[task_type] + std::to_string(task_counter++);
 
     RCLCPP_INFO(node->get_logger(),
@@ -408,7 +409,7 @@ public:
 
     // HACK: publish completion to filtered task summary
     filtered_task_summaries_pub->publish(
-        rmf_task_ros2::convert_status(*status));
+      rmf_task_ros2::convert_status(*status));
 
     (terminal_dispatch_tasks)[id] = status;
     user_submitted_tasks.erase(id);
