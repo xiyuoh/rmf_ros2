@@ -172,7 +172,7 @@ PYBIND11_MODULE(rmf_adapter, m) {
         finishing_request =
           std::make_shared<rmf_task::requests::ReturnToChargerFactory>();
       }
-      
+
       return self.set_task_planner_params(
         std::make_shared<battery::BatterySystem>(b_sys),
         std::make_shared<battery::SimpleMotionPowerSink>(m_sink),
@@ -297,6 +297,12 @@ PYBIND11_MODULE(rmf_adapter, m) {
   .def("now", [](rclcpp::Node& self)
     {
       return rmf_traffic_ros2::convert(self.now());
+    })
+  .def("use_sim_time_value", [](rclcpp::Node& self)
+    {
+      bool use_sim_time;
+      self.get_parameter("use_sim_time", use_sim_time);
+      return use_sim_time;
     })
   .def("use_sim_time", [](rclcpp::Node& self)
     {
