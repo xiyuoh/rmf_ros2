@@ -108,16 +108,16 @@ const rmf_task::agv::State Task::finish_state() const
 }
 
 //==============================================================================
-const Task::ProfileMsg Task::task_profile() const
+void Task::task_profile(Task::TaskProfileMsg profile)
 {
-  return _task_profile;
+  _profile = profile;
+  return;
 }
 
 //==============================================================================
-auto Task::task_profile(Task::ProfileMsg task_profile) -> Task&
+const Task::TaskProfileMsg& Task::task_profile() const
 {
-  _task_profile = task_profile;
-  return *this;
+  return _profile;
 }
 
 //==============================================================================

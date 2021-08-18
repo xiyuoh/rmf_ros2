@@ -96,6 +96,7 @@ public:
     std::function<void(const StatusMsg&)>;
 
   using PendingPhases = std::vector<std::unique_ptr<PendingPhase>>;
+  using TaskProfileMsg = rmf_task_msgs::msg::TaskProfile;
 
   // Make a new task
   static std::shared_ptr<Task> make(
@@ -134,11 +135,11 @@ public:
   /// Get the finish state of this Task
   const rmf_task::agv::State finish_state() const;
 
-  /// Set the TaskProfile of this Task
-  Task& task_profile(ProfileMsg task_profile);
+  /// Set the TaskProfile of this task
+  void task_profile(TaskProfileMsg profile);
 
-  /// Get the TaskProfile of this Task
-  const ProfileMsg task_profile() const;
+  /// Get the TaskProfile of this task
+  const TaskProfileMsg& task_profile() const;
 
 private:
 
@@ -169,7 +170,8 @@ private:
   rmf_traffic::Time _deployment_time;
   rmf_task::agv::State _finish_state;
   rmf_task::ConstRequestPtr _request;
-  ProfileMsg _task_profile;
+
+  TaskProfileMsg _profile;
 
   void _start_next_phase();
 

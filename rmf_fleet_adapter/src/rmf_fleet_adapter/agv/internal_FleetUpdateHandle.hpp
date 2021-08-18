@@ -158,8 +158,6 @@ public:
 
   // Map task id to pair of <RequestPtr, Assignments>
   using Assignments = rmf_task::agv::TaskPlanner::Assignments;
-  std::unordered_map<std::string,
-    std::pair<rmf_task::RequestPtr, Assignments>> task_map = {};
 
   // Map of dock name to dock parameters
   std::unordered_map<std::string,
