@@ -161,6 +161,14 @@ void TaskManager::set_queue(
       {
         task_profile = it->second;
       }
+      else
+      {
+        // This could be an auto-generated task.
+        task_profile.task_id = request->id();
+        task_profile.submission_time = _context->node()->now();
+        task_profile.description.start_time = rmf_traffic_ros2::convert(
+          request->earliest_start_time());
+      }
 
       using namespace rmf_task::requests;
 
@@ -173,6 +181,9 @@ void TaskManager::set_queue(
           start,
           a.deployment_time(),
           a.state());
+
+        task_profile.description.task_type.type =
+          rmf_task_msgs::msg::TaskType::TYPE_CLEAN;
         task->task_profile(task_profile);
 
         _queue.push_back(task);
@@ -188,12 +199,6 @@ void TaskManager::set_queue(
           a.deployment_time(),
           a.state());
 
-        // The TaskProfile for auto-generated tasks such as ChargeBattery will
-        // need to be manually constructed
-        task_profile.task_id = request->id();
-        task_profile.submission_time = _context->node()->now();
-        task_profile.description.start_time = rmf_traffic_ros2::convert(
-          request->earliest_start_time());
         task_profile.description.task_type.type =
           rmf_task_msgs::msg::TaskType::TYPE_CHARGE_BATTERY;
         task->task_profile(task_profile);
@@ -211,6 +216,9 @@ void TaskManager::set_queue(
           a.deployment_time(),
           a.state(),
           task_profile.description.delivery);
+
+        task_profile.description.task_type.type =
+          rmf_task_msgs::msg::TaskType::TYPE_CLEAN;
         task->task_profile(task_profile);
 
         _queue.push_back(task);
@@ -225,6 +233,9 @@ void TaskManager::set_queue(
           start,
           a.deployment_time(),
           a.state());
+
+        task_profile.description.task_type.type =
+          rmf_task_msgs::msg::TaskType::TYPE_LOOP;
         task->task_profile(task_profile);
 
         _queue.push_back(task);
