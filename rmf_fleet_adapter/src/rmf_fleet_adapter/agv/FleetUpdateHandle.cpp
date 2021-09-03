@@ -1251,7 +1251,7 @@ bool FleetUpdateHandle::set_task_planner_params(
       nullptr,
       finishing_request};
     _pimpl->task_planner = std::make_shared<rmf_task::agv::TaskPlanner>(
-      std::move(task_config, std::move(options)));
+      std::move(task_config), std::move(options));
 
     // Here we update the task planner in all the RobotContexts.
     // The TaskManagers rely on the parameters in the task planner for
@@ -1259,8 +1259,6 @@ bool FleetUpdateHandle::set_task_planner_params(
     // task planner here is updated.
     for (const auto& t : _pimpl->task_managers)
       t.first->task_planner(_pimpl->task_planner);
-
-    _pimpl->finishing_request = std::move(finishing_request);
 
     return true;
   }
