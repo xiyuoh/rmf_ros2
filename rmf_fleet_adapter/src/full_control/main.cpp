@@ -314,6 +314,17 @@ public:
   void update_state(const rmf_fleet_msgs::msg::RobotState& state)
   {
     auto lock = _lock();
+
+    if (!_last_known_state.has_value() || _last_known_state->path != state.path)
+    {
+      std::cout << "Remaining path of [" << _current_path_request.robot_name
+                << "] is now:";
+      for (const auto& p : state.path)
+        std::cout << " (" << p.x << ", " << p.y << ")";
+
+      std::cout << "\n -- Current location is {" << state.location.x << ", "
+                << state.location.y << "}" <<  std::endl;
+    }
     _last_known_state = state;
 
     // Update battery soc

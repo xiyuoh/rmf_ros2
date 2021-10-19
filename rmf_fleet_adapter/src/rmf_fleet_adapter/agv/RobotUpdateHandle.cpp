@@ -58,14 +58,6 @@ void RobotUpdateHandle::interrupted()
   }
 }
 
-std::ostream& operator<<(std::ostream& os, const std::vector<rmf_traffic::agv::Plan::Start>& location)
-{
-  for (const auto& l : location)
-    os << " " << l.waypoint();
-  os << " ";
-  return os;
-}
-
 bool operator==(
   const std::vector<rmf_traffic::agv::Plan::Start>& a,
   const std::vector<rmf_traffic::agv::Plan::Start>& b)
@@ -90,16 +82,67 @@ bool operator!=(
   return !(a == b);
 }
 
-void check_update(
+class WW
+{
+public:
+  WW(const std::vector<rmf_traffic::agv::Plan::Start>& wps,
+     const rmf_traffic::agv::Graph& graph)
+    : wps(wps),
+      graph(graph)
+  {
+
+  }
+
+  void stream_wp(std::ostream& os, std::size_t index) const
+  {
+    const auto& wp = graph.get_waypoint(index);
+    if (const auto* name = wp.name())
+      os << "" << *name;
+    else
+      os << "#" << index;
+
+    const auto& p = wp.get_location();
+    os << "(" << p.x() << ", " << p.y() << ")";
+  }
+
+  const std::vector<rmf_traffic::agv::Plan::Start>& wps;
+  const rmf_traffic::agv::Graph& graph;
+};
+
+std::ostream& operator<<(std::ostream& os, WW w)
+{
+  for (const auto& l : w.wps)
+  {
+    os << " ";
+    if (l.lane().has_value())
+    {
+      const auto& entry = w.graph.get_lane(l.lane().value()).entry().waypoint_index();
+      w.stream_wp(os, entry);
+      os << "->";
+    }
+
+    w.stream_wp(os, l.waypoint());
+  }
+  os << " ";
+
+  return os;
+}
+
+bool check_update(
   const std::vector<rmf_traffic::agv::Plan::Start>& old,
-  const std::vector<rmf_traffic::agv::Plan::Start>& next,
+  const std::shared_ptr<RobotContext>& context,
   const std::size_t line)
 {
-  if (next != old)
+  const auto& graph = context->planner()->get_configuration().graph();
+  if (context->location() != old)
   {
-    std::cout << " >>> Updating waypoint from [" << old << "] to ["
-              << next << "] at line [" << line << "]";
+    std::cout << " >>> Updating waypoint of [" << context->name() << "] from ["
+              << WW(old, graph) << "] to ["
+              << WW(context->location(), graph) << "] at line [" << line << "]" << std::endl;
+    return true;
   }
+
+  return false;
 }
 
 //==============================================================================
@@ -120,7 +163,7 @@ void RobotUpdateHandle::update_position(
             waypoint, orientation)
         };
 
-        check_update(old, context->_location, line);
+        check_update(old, context, line);
       });
   }
 }
@@ -160,7 +203,7 @@ void RobotUpdateHandle::update_position(
         const auto old = context->_location;
         context->_location = std::move(starts);
 
-        check_update(old, context->_location, line);
+        check_update(old, context, line);
       });
   }
 }
@@ -183,7 +226,7 @@ void RobotUpdateHandle::update_position(
             waypoint, position[2], Eigen::Vector2d(position.block<2, 1>(0, 0)))
         };
 
-        check_update(old, context->_location, line);
+        check_update(old, context, line);
       });
   }
 }
@@ -217,11 +260,16 @@ void RobotUpdateHandle::update_position(
     }
 
     context->worker().schedule(
-      [context, starts = std::move(starts), line](const auto&)
+      [context, starts = std::move(starts), line, position, max_merge_lane_distance](const auto&)
       {
         const auto old = context->_location;
         context->_location = std::move(starts);
-        check_update(old, context->_location, line);
+
+        if (check_update(old, context, line))
+        {
+          std::cout << " -- From position (" << position.x() << ", " << position.y()
+                    << ") with merge distance " << max_merge_lane_distance << std::endl;
+        }
       });
   }
 }
