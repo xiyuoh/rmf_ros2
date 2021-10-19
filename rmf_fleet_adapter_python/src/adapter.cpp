@@ -70,26 +70,29 @@ PYBIND11_MODULE(rmf_adapter, m) {
   // Private constructor: Only to be constructed via FleetUpdateHandle!
   .def("interrupted", &agv::RobotUpdateHandle::interrupted)
   .def("update_current_waypoint",
-    py::overload_cast<std::size_t, double>(
+    py::overload_cast<std::size_t, double, std::size_t>(
       &agv::RobotUpdateHandle::update_position),
     py::arg("waypoint"),
     py::arg("orientation"),
+       py::arg("line") = __LINE__,
     py::call_guard<py::scoped_ostream_redirect,
     py::scoped_estream_redirect>())
   .def("update_current_lanes",
     py::overload_cast<const Eigen::Vector3d&,
-    const std::vector<std::size_t>&>(
+    const std::vector<std::size_t>&, std::size_t>(
       &agv::RobotUpdateHandle::update_position),
     py::arg("position"),
     py::arg("lanes"),
+       py::arg("line") = __LINE__,
     py::call_guard<py::scoped_ostream_redirect,
     py::scoped_estream_redirect>())
   .def("update_off_grid_position",
     py::overload_cast<const Eigen::Vector3d&,
-    std::size_t>(
+    std::size_t, std::size_t>(
       &agv::RobotUpdateHandle::update_position),
     py::arg("position"),
     py::arg("target_waypoint"),
+       py::arg("line") = __LINE__,
     py::call_guard<py::scoped_ostream_redirect,
     py::scoped_estream_redirect>())
   .def("update_lost_position",
@@ -97,13 +100,15 @@ PYBIND11_MODULE(rmf_adapter, m) {
     const Eigen::Vector3d&,
     const double,
     const double,
-    const double>(
+    const double,
+    std::size_t>(
       &agv::RobotUpdateHandle::update_position),
     py::arg("map_name"),
     py::arg("position"),
     py::arg("max_merge_waypoint_distance") = 0.1,
     py::arg("max_merge_lane_distance") = 1.0,
     py::arg("min_lane_length") = 1e-8,
+       py::arg("line") = __LINE__,
     py::call_guard<py::scoped_ostream_redirect,
     py::scoped_estream_redirect>())
   .def("set_charger_waypoint", &agv::RobotUpdateHandle::set_charger_waypoint,

@@ -64,7 +64,7 @@ void check_path_finish(
   {
     // We are close enough to the goal that we will say the robot is
     // currently located there.
-    info.updater->update_position(*wp.graph_index(), l.yaw);
+    info.updater->update_position(*wp.graph_index(), l.yaw, __LINE__);
   }
 
   assert(info.path_finished_callback);
@@ -178,7 +178,7 @@ void estimate_midlane_state(
     {
       // This implies that the robot is either waiting at or rotating on the
       // waypoint.
-      info.updater->update_position(target_gi, l.yaw);
+      info.updater->update_position(target_gi, l.yaw, __LINE__);
     }
     else if (const auto* forward_lane =
       info.graph->lane_from(last_gi, target_gi))
@@ -202,13 +202,13 @@ void estimate_midlane_state(
         }
       }
 
-      info.updater->update_position({l.x, l.y, l.yaw}, std::move(lanes));
+      info.updater->update_position({l.x, l.y, l.yaw}, std::move(lanes), __LINE__);
     }
   }
 
   // The target should always have a graph index, because only the first
   // waypoint in a command should ever be lacking a graph index.
-  info.updater->update_position({l.x, l.y, l.yaw}, target_gi);
+  info.updater->update_position({l.x, l.y, l.yaw}, target_gi, __LINE__);
 }
 
 //==============================================================================
@@ -228,14 +228,14 @@ void estimate_state(
     {
       // We will assume that the robot is meant to be on this last known
       // waypoint.
-      info.updater->update_position(last_known_wp.index(), l.yaw);
+      info.updater->update_position(last_known_wp.index(), l.yaw, __LINE__);
       return;
     }
     else if (dist < 1.5)
     {
       // We will assume that the robot is meant to be at this last known
       // waypoint, but is kind of diverged.
-      info.updater->update_position({l.x, l.y, l.yaw}, last_known_wp.index());
+      info.updater->update_position({l.x, l.y, l.yaw}, last_known_wp.index(), __LINE__);
       return;
     }
 
@@ -254,7 +254,7 @@ void estimate_state(
     return;
   }
 
-  info.updater->update_position(last_known_map, {l.x, l.y, l.yaw});
+  info.updater->update_position(last_known_map, {l.x, l.y, l.yaw}, 0.1, 1.0, 1e-8, __LINE__);
 }
 
 //==============================================================================
@@ -296,5 +296,5 @@ void estimate_waypoint(
       info.robot_name.c_str(), info.fleet_name.c_str(), nearest_dist);
   }
 
-  info.updater->update_position(closest_wp->index(), l.yaw);
+  info.updater->update_position(closest_wp->index(), l.yaw, __LINE__);
 }

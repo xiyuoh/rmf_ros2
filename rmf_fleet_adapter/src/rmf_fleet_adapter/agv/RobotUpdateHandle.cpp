@@ -20,6 +20,7 @@
 #include <rmf_traffic_ros2/Time.hpp>
 
 #include <iostream>
+#include <unordered_set>
 
 namespace rmf_fleet_adapter {
 namespace agv {
@@ -57,21 +58,69 @@ void RobotUpdateHandle::interrupted()
   }
 }
 
+std::ostream& operator<<(std::ostream& os, const std::vector<rmf_traffic::agv::Plan::Start>& location)
+{
+  for (const auto& l : location)
+    os << " " << l.waypoint();
+  os << " ";
+  return os;
+}
+
+bool operator==(
+  const std::vector<rmf_traffic::agv::Plan::Start>& a,
+  const std::vector<rmf_traffic::agv::Plan::Start>& b)
+{
+  std::unordered_set<std::size_t> in_a;
+  for (const auto& l : a)
+    in_a.insert(l.waypoint());
+
+  for (const auto& l : b)
+  {
+    if (in_a.erase(l.waypoint()) == 0)
+      return false;
+  }
+
+  return in_a.empty();
+}
+
+bool operator!=(
+  const std::vector<rmf_traffic::agv::Plan::Start>& a,
+  const std::vector<rmf_traffic::agv::Plan::Start>& b)
+{
+  return !(a == b);
+}
+
+void check_update(
+  const std::vector<rmf_traffic::agv::Plan::Start>& old,
+  const std::vector<rmf_traffic::agv::Plan::Start>& next,
+  const std::size_t line)
+{
+  if (next != old)
+  {
+    std::cout << " >>> Updating waypoint from [" << old << "] to ["
+              << next << "] at line [" << line << "]";
+  }
+}
+
 //==============================================================================
 void RobotUpdateHandle::update_position(
   std::size_t waypoint,
-  double orientation)
+  double orientation,
+  std::size_t line)
 {
   if (const auto context = _pimpl->get_context())
   {
     context->worker().schedule(
-      [context, waypoint, orientation](const auto&)
+      [context, waypoint, orientation, line](const auto&)
       {
+        const auto old = context->_location;
         context->_location = {
           rmf_traffic::agv::Plan::Start(
             rmf_traffic_ros2::convert(context->node()->now()),
             waypoint, orientation)
         };
+
+        check_update(old, context->_location, line);
       });
   }
 }
@@ -79,7 +128,8 @@ void RobotUpdateHandle::update_position(
 //==============================================================================
 void RobotUpdateHandle::update_position(
   const Eigen::Vector3d& position,
-  const std::vector<std::size_t>& lanes)
+  const std::vector<std::size_t>& lanes,
+  std::size_t line)
 {
   if (const auto context = _pimpl->get_context())
   {
@@ -105,9 +155,12 @@ void RobotUpdateHandle::update_position(
     }
 
     context->worker().schedule(
-      [context, starts = std::move(starts)](const auto&)
+      [context, starts = std::move(starts), line](const auto&)
       {
+        const auto old = context->_location;
         context->_location = std::move(starts);
+
+        check_update(old, context->_location, line);
       });
   }
 }
@@ -115,18 +168,22 @@ void RobotUpdateHandle::update_position(
 //==============================================================================
 void RobotUpdateHandle::update_position(
   const Eigen::Vector3d& position,
-  const std::size_t waypoint)
+  const std::size_t waypoint,
+  std::size_t line)
 {
   if (const auto& context = _pimpl->get_context())
   {
     context->worker().schedule(
-      [context, position, waypoint](const auto&)
+      [context, position, waypoint, line](const auto&)
       {
+        const auto old = context->_location;
         context->_location = {
           rmf_traffic::agv::Plan::Start(
             rmf_traffic_ros2::convert(context->node()->now()),
             waypoint, position[2], Eigen::Vector2d(position.block<2, 1>(0, 0)))
         };
+
+        check_update(old, context->_location, line);
       });
   }
 }
@@ -137,7 +194,8 @@ void RobotUpdateHandle::update_position(
   const Eigen::Vector3d& position,
   const double max_merge_waypoint_distance,
   const double max_merge_lane_distance,
-  const double min_lane_length)
+  const double min_lane_length,
+  std::size_t line)
 {
   if (const auto context = _pimpl->get_context())
   {
@@ -159,9 +217,11 @@ void RobotUpdateHandle::update_position(
     }
 
     context->worker().schedule(
-      [context, starts = std::move(starts)](const auto&)
+      [context, starts = std::move(starts), line](const auto&)
       {
+        const auto old = context->_location;
         context->_location = std::move(starts);
+        check_update(old, context->_location, line);
       });
   }
 }

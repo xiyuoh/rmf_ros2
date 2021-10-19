@@ -51,7 +51,8 @@ public:
   /// the robot is on and its orientation.
   void update_position(
     std::size_t waypoint,
-    double orientation);
+    double orientation,
+    std::size_t line = 0);
 
   /// Update the current position of the robot by specifying the x, y, yaw
   /// position of the robot and one or more lanes that the robot is occupying.
@@ -61,7 +62,8 @@ public:
   /// signature of this function.
   void update_position(
     const Eigen::Vector3d& position,
-    const std::vector<std::size_t>& lanes);
+    const std::vector<std::size_t>& lanes,
+    std::size_t line = 0);
 
   /// Update the current position of the robot by specifying the x, y, yaw
   /// position of the robot and the waypoint that it is moving towards.
@@ -70,7 +72,8 @@ public:
   /// course but it is merging back onto a waypoint.
   void update_position(
     const Eigen::Vector3d& position,
-    std::size_t target_waypoint);
+    std::size_t target_waypoint,
+    std::size_t line = 0);
 
   /// Update the current position of the robot by specifying the x, y, yaw
   /// position of the robot and what map the robot is on.
@@ -86,7 +89,8 @@ public:
     const Eigen::Vector3d& position,
     const double max_merge_waypoint_distance = 0.1,
     const double max_merge_lane_distance = 1.0,
-    const double min_lane_length = 1e-8);
+    const double min_lane_length = 1e-8,
+    std::size_t line = 0);
 
   /// Set the waypoint where the charger for this robot is located.
   /// If not specified, the nearest waypoint in the graph with the is_charger()
