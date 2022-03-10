@@ -102,6 +102,26 @@ public:
     rmf_traffic::agv::Graph navigation_graph,
     std::optional<std::string> server_uri = std::nullopt);
 
+  /// Create an easy-to-use version of a full control fleet to be adapted.
+  ///
+  /// \param[in] fleet_name
+  ///   The name of the fleet that is being added.
+  ///
+  /// \param[in] traits
+  ///   Specify the approximate traits of the vehicles in this fleet.
+  ///
+  /// \param[in] navigation_graph
+  ///   Specify the navigation graph used by the vehicles in this fleet.
+  ///
+  /// \param[in] server_uri
+  ///   Specify the URI for the websocket server that receives updates on tasks
+  ///   and states. If nullopt, data will not be published.
+  std::shared_ptr<EasyFullControl> add_easy_full_control(
+    const std::string& fleet_name,
+    const std::string& config_file,
+    const std::string& nav_graph_file,
+    std::optional<std::string> server_uri = std::nullopt);
+
   using Blockers = std::vector<EasyTrafficLight::Blocker>;
 
   /// Create an easy-to-use version of a traffic light to help manage robots

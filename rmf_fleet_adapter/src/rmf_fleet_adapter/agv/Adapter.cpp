@@ -27,6 +27,7 @@
 #include <rmf_traffic_ros2/blockade/Writer.hpp>
 
 #include "internal_EasyTrafficLight.hpp"
+#include "internal_EasyFullControl.hpp"
 
 #include "../load_param.hpp"
 
@@ -225,6 +226,26 @@ std::shared_ptr<FleetUpdateHandle> Adapter::add_fleet(
 
   _pimpl->fleets.push_back(fleet);
   return fleet;
+}
+
+//==============================================================================
+std::shared_ptr<EasyFullControl> Adapter::add_easy_full_control(
+  const std::string& fleet_name,
+  const std::string& config_file,
+  const std::string& nav_graph_file,
+  std::optional<std::string> server_uri)
+{
+  auto easy_fleet = EasyFullControl::Implementation::make(
+    fleet_name, _pimpl->node, server_uri);
+
+  // TODO(XY): get traits from config file and graph from nav graph file
+  const auto traits = config_file;
+  const auto graph = nav_graph_file;
+
+  fleet = add_fleet(fleet_name, traits, graph, server_uri);
+
+  _pimpl->fleets.push_back(fleet);
+  return easy_fleet;
 }
 
 //==============================================================================
