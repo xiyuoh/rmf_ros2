@@ -27,9 +27,9 @@ namespace agv {
 class EasyFullControl::Implementation
 {
 public:
-  std::shared_ptr<FleetUpdateHandle> fleet_handle;
-  const std::string name;
-  const std::shared_ptr<Node> node;
+  // std::shared_ptr<FleetUpdateHandle> fleet_handle;
+  // const std::string name;
+  // const std::shared_ptr<Node> node;
 //   const rmf_traffic::agv::Graph graph;
 //   const rmf_traffic::agv::VehicleTraits traits;
 //   std::optional<std::string> server_uri;
@@ -43,13 +43,14 @@ public:
     const rmf_fleet_adapter::agv::AdapterPtr& adapter,
     const std::string fleet_name,
     const std::string config_file,
-    const std::string graph_file);
+    const std::string graph_file,
+    std::optional<std::string> server_uri);
 
   void add_robots(
     const std::string fleet_name,
     // const rclcpp::Node node=node, // set default
     const rmf_traffic::agv::Graph graph,
-    const rmf_traffic::agv::VehicleTraits traits);
+    const rmf_traffic::agv::VehicleTraits traits); // arguments KIV
 
 };
 

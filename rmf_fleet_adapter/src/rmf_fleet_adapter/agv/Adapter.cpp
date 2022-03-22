@@ -235,17 +235,20 @@ std::shared_ptr<EasyFullControl> Adapter::add_easy_full_control(
   const std::string& nav_graph_file,
   std::optional<std::string> server_uri)
 {
-  auto easy_fleet = EasyFullControl::Implementation::make(
+
+  // #1 make a new EFC node or some shit. idk what make is
+  auto easy_handle = EasyFullControl::Implementation::make(
     fleet_name, _pimpl->node, server_uri);
 
-  // TODO(XY): get traits from config file and graph from nav graph file
-  const auto traits = config_file;
-  const auto graph = nav_graph_file;
+  // #2 unwrap yaml files, add_fleet, and settle fleet_handle setups
+  auto easy_fleet = easy_handle.initialize_fleet(_pimpl, fleet_name, config_file, nav_graph_file, server_uri);
 
-  fleet = add_fleet(fleet_name, traits, graph, server_uri);
+  // #3 add robots to fleet
+  easy_handle.add_robots(fleet_name, config_file) // arguments KIV
 
-  _pimpl->fleets.push_back(fleet);
-  return easy_fleet;
+  _pimpl->fleets.push_back(easy_fleet);
+
+  return easy_handle;
 }
 
 //==============================================================================
