@@ -19,6 +19,7 @@
 
 #include <rmf_fleet_adapter/agv/FleetUpdateHandle.hpp>
 #include <rmf_fleet_adapter/agv/EasyTrafficLight.hpp>
+#include <rmf_fleet_adapter/agv/EasyFullControl.hpp>
 
 #include <rmf_traffic/agv/VehicleTraits.hpp>
 #include <rmf_traffic/agv/Graph.hpp>
@@ -117,6 +118,7 @@ public:
   ///   Specify the URI for the websocket server that receives updates on tasks
   ///   and states. If nullopt, data will not be published.
   std::shared_ptr<EasyFullControl> add_easy_full_control(
+    std::shared_ptr<Adapter> adapter,
     const std::string& fleet_name,
     const std::string& config_file,
     const std::string& nav_graph_file,

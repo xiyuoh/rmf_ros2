@@ -64,6 +64,8 @@
 #include <unordered_set>
 #include <optional>
 
+#include <iostream>
+
 //==============================================================================
 rmf_fleet_adapter::agv::RobotUpdateHandle::Unstable::Decision
 convert_decision(uint32_t decision)
@@ -1322,9 +1324,35 @@ int main(int argc, char* argv[])
   if (!adapter)
     return 1;
 
-  const auto fleet_connections = make_fleet(adapter);
-  if (!fleet_connections)
+  // const std::string use_sim_time_param_name = "use_sim_time";
+  // const bool use_sim_time =
+  //   adapter->node()->declare_parameter(use_sim_time_param_name, bool());
+  // if (use_sim_time.empty())
+  // {
+  //   RCLCPP_ERROR(
+  //     adapter->node()->get_logger(),
+  //     "Missing [%s] parameter", use_sim_time_param_name.c_str());
+
+  //   return nullptr;
+  // }
+  // if (use_sim_time)
+  // {
+  //   adapter->node()->use_sim_time();
+  // }
+
+  // std::string fleet_name = "test_adapter";
+  // std::string config_file_path = "/home/xiyu/fleet_ws/config.yaml";
+  // std::string nav_graph_path = "/home/xiyu/fleet_ws/install/rmf_demos_maps/share/rmf_demos_maps/maps/office/nav_graphs/0.yaml";
+
+  auto efc_handle = adapter->add_easy_full_control(
+    adapter, fleet_name, config_file_path, nav_graph_path);
+  if (!efc_handle)
     return 1;
+
+  // set the api functions
+
+  // add robot here (because very hard to add inside before setting navigate and shit lol)
+  // efc_handle->add_robots(fleet_name, config_file_path);
 
   RCLCPP_INFO(adapter->node()->get_logger(), "Starting Fleet Adapter");
 

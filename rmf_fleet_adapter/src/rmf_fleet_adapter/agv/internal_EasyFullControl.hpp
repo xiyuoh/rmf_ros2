@@ -20,6 +20,9 @@
 
 #include <rmf_fleet_adapter/agv/EasyFullControl.hpp>
 
+#include "Node.hpp"
+#include <yaml-cpp/yaml.h>
+
 namespace rmf_fleet_adapter {
 namespace agv {
 
@@ -27,20 +30,25 @@ namespace agv {
 class EasyFullControl::Implementation
 {
 public:
-  // std::shared_ptr<FleetUpdateHandle> fleet_handle;
-  // const std::string name;
-  // const std::shared_ptr<Node> node;
-//   const rmf_traffic::agv::Graph graph;
-//   const rmf_traffic::agv::VehicleTraits traits;
-//   std::optional<std::string> server_uri;
+  std::shared_ptr<Adapter> _adapter;
+  // std::shared_ptr<FleetUpdateHandle> _fleet_handle;
+  const std::string _fleet_name;
+  std::shared_ptr<Node> _node;
+  // const rmf_traffic::agv::Graph _graph;
+  // const rmf_traffic::agv::VehicleTraits _traits;
+  // const YAML::Node _fleet_config;
+  std::optional<std::string> _server_uri;
 
-  std::shared_ptr<EasyFullControl> make(
+  static std::shared_ptr<EasyFullControl> make(
+    std::shared_ptr<Adapter> adapter,
     const std::string& fleet_name,
     std::shared_ptr<Node> node,
+    const std::string config_file,
+    const std::string graph_file,
     std::optional<std::string> server_uri);
 
-  void initialize_fleet(
-    const rmf_fleet_adapter::agv::AdapterPtr& adapter,
+  std::shared_ptr<FleetUpdateHandle> initialize_fleet(
+    const rmf_fleet_adapter::agv::AdapterPtr adapter,
     const std::string fleet_name,
     const std::string config_file,
     const std::string graph_file,
@@ -48,9 +56,7 @@ public:
 
   void add_robots(
     const std::string fleet_name,
-    // const rclcpp::Node node=node, // set default
-    const rmf_traffic::agv::Graph graph,
-    const rmf_traffic::agv::VehicleTraits traits); // arguments KIV
+    const std::string config_file); // arguments KIV
 
 };
 

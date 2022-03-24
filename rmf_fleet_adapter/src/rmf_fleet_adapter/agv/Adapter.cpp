@@ -230,23 +230,16 @@ std::shared_ptr<FleetUpdateHandle> Adapter::add_fleet(
 
 //==============================================================================
 std::shared_ptr<EasyFullControl> Adapter::add_easy_full_control(
+  std::shared_ptr<Adapter> adapter,
   const std::string& fleet_name,
   const std::string& config_file,
   const std::string& nav_graph_file,
   std::optional<std::string> server_uri)
 {
-
-  // #1 make a new EFC node or some shit. idk what make is
   auto easy_handle = EasyFullControl::Implementation::make(
-    fleet_name, _pimpl->node, server_uri);
+    adapter, fleet_name, _pimpl->node, config_file, nav_graph_file, server_uri);
 
-  // #2 unwrap yaml files, add_fleet, and settle fleet_handle setups
-  auto easy_fleet = easy_handle.initialize_fleet(_pimpl, fleet_name, config_file, nav_graph_file, server_uri);
-
-  // #3 add robots to fleet
-  easy_handle.add_robots(fleet_name, config_file) // arguments KIV
-
-  _pimpl->fleets.push_back(easy_fleet);
+  // _pimpl->fleets.push_back(easy_fleet);
 
   return easy_handle;
 }

@@ -102,13 +102,10 @@
 
 //   double get_battery_soc();
 
-//   std::size_t get_current_lane(
-//     //
-//   );
+//   std::size_t get_current_lane();
 
 //   std::optional<double> get_speed_limit(
-//     //
-//   );
+//     rmf_traffic::agv::Plan::Waypoint target_waypoint);
 
 //   void set_updater();
 

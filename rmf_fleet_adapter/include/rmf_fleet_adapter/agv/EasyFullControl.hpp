@@ -19,7 +19,7 @@
 #define RMF_FLEET_ADAPTER__AGV__EASYFULLCONTROL_HPP
 
 #include <Eigen/Geometry>
-#include <memory>
+#include <rmf_fleet_adapter/agv/RobotUpdateHandle.hpp>
 
 namespace rmf_fleet_adapter {
 namespace agv {
@@ -29,48 +29,32 @@ class EasyFullControl : public std::enable_shared_from_this<EasyFullControl>
 {
 public:
 
-  using NavigationCompleted = std::function<bool(std::string id)>;
+  using ProcessCompleted = std::function<bool(const std::string& id)>;
 
-  /// Set the navigation function from your Robot API
-  ///
-  /// \param[in] navigate
-  ///  The API function for navigating your robot to a pose
-  ///  Takes in the robot name, pose and string ID of the navigation task
-  ///  Returns a NavigationCompleted to check status of navigation task
-
-  void navigate(
-    std::function<NavigationCompleted(
-      const std::string name,
-      const Eigen::Vector3d pose,
-      std::string id)>);
-
-  /// Stop the robot.
+  /// Initialize a robot in the fleet
   ///
   /// \param[in] name
-  ///   The name of the robot the stop command is sent to.
-  void stop(const std::string name);
-
-  using ActionCompleted = std::function<bool(std::string id)>;
-
-  /// Set the start process function from your Robot API
+  ///   The name of the robot
   ///
-  /// \param[in] start_process
-  ///  The API function for requesting your robot to complete an action/process
-  ///  Takes in the robot name, action name, and string ID of the action
-  ///  Returns a ActionCompleted to check status of action task
+  /// \param[in] get_position
+  ///   The position function that returns the robot's current location
+  ///
+  /// \param[in] navigate
+  ///   The API function for navigating your robot to a pose
+  ///   Returns a ProcessCompleted callback to check status of navigation task
+  ///
+  /// \param[in] action_executor
+  ///   The ActionExecutor callback to request the robot to perform an action
 
-  void perform_action(
-    std::function<ActionCompleted(
-      const std::string name,
-      const std::string action,
-      std::string id)>);
-
-
-  class Implementation;
+  bool add_robot(
+    const std::string& name,
+    const Eigen::Vector3d& pose,
+    std::function<Eigen::Vector3d()> get_position,
+    std::function<ProcessCompleted(const Eigen::Vector3d pose)> navigate,
+    ActionExecutor action_executor);
 
 private:
   EasyFullControl();
-  rmf_utils::unique_impl_ptr<Implementation> _pimpl;
 };
 
 using EasyFullControlPtr = std::shared_ptr<EasyFullControl>;
