@@ -209,6 +209,72 @@ void RobotUpdateHandle::update_battery_soc(const double battery_soc)
 }
 
 //==============================================================================
+void RobotUpdateHandle::override_status(std::optional<std::string> status)
+{
+
+  if (const auto context = _pimpl->get_context())
+  {
+
+    if (status.has_value())
+    {
+      // Here we capture [this] to avoid potential costly copy of
+      // schema_dictionary when more enties are inserted in the future.
+      // It is permissible here since the lambda will only be used within the
+      // scope of this function.
+      const auto loader =
+        [context, this](
+        const nlohmann::json_uri& id,
+        nlohmann::json& value)
+        {
+          const auto it = _pimpl->schema_dictionary.find(id.url());
+          if (it == _pimpl->schema_dictionary.end())
+          {
+            RCLCPP_ERROR(
+              context->node()->get_logger(),
+              "url: %s not found in schema dictionary. "
+              "Status for robot [%s] will not be overwritten.",
+              id.url().c_str(),
+              context->name().c_str());
+            return;
+          }
+
+          value = it->second;
+        };
+
+      try
+      {
+        static const auto validator =
+          nlohmann::json_schema::json_validator(
+          rmf_api_msgs::schemas::robot_state, loader);
+
+        nlohmann::json dummy_msg;
+        dummy_msg["status"] = status.value();
+        validator.validate(dummy_msg);
+
+      }
+      catch (const std::exception& e)
+      {
+        RCLCPP_ERROR(
+          context->node()->get_logger(),
+          "Encountered error: %s. Please ensure the override status is a "
+          "valid string as per the robot_state.json schema. The status for "
+          "robot [%s] will not over overwritten.",
+          e.what(),
+          context->name().c_str()
+        );
+        return;
+      }
+    }
+
+    context->worker().schedule(
+      [context, status](const auto&)
+      {
+        context->override_status(status);
+      });
+  }
+}
+
+//==============================================================================
 RobotUpdateHandle& RobotUpdateHandle::maximum_delay(
   rmf_utils::optional<rmf_traffic::Duration> value)
 {
@@ -496,6 +562,75 @@ RobotUpdateHandle::Unstable::get_participant()
 }
 
 //==============================================================================
+void RobotUpdateHandle::Unstable::declare_holding(
+  std::string on_map,
+  Eigen::Vector3d at_position,
+  rmf_traffic::Duration for_duration)
+{
+  if (const auto context = _pimpl->get_context())
+  {
+    context->worker().schedule(
+      [
+        w = context->weak_from_this(),
+        on_map = std::move(on_map),
+        at_position,
+        for_duration
+      ](const auto&)
+      {
+        if (const auto context = w.lock())
+        {
+          const auto now = context->now();
+          const auto zero = Eigen::Vector3d::Zero();
+          rmf_traffic::Trajectory holding;
+          holding.insert(now, at_position, zero);
+          holding.insert(now + for_duration, at_position, zero);
+
+          context->itinerary().set(
+            context->itinerary().assign_plan_id(),
+            {{std::move(on_map), std::move(holding)}});
+        }
+      });
+  }
+}
+
+//==============================================================================
+class RobotUpdateHandle::Unstable::Stubbornness::Implementation
+{
+public:
+  std::shared_ptr<void> stubbornness;
+
+  static Stubbornness make(std::shared_ptr<void> stubbornness)
+  {
+    Stubbornness output;
+    output._pimpl = rmf_utils::make_impl<Implementation>(
+      Implementation{stubbornness});
+
+    return output;
+  }
+};
+
+//==============================================================================
+void RobotUpdateHandle::Unstable::Stubbornness::release()
+{
+  _pimpl->stubbornness = nullptr;
+}
+
+//==============================================================================
+RobotUpdateHandle::Unstable::Stubbornness::Stubbornness()
+{
+  // Do nothing
+}
+
+//==============================================================================
+auto RobotUpdateHandle::Unstable::be_stubborn() -> Stubbornness
+{
+  if (auto context = _pimpl->get_context())
+    return Stubbornness::Implementation::make(context->be_stubborn());
+
+  return Stubbornness::Implementation::make(nullptr);
+}
+
+//==============================================================================
 void RobotUpdateHandle::Unstable::set_lift_entry_watchdog(
   Watchdog watchdog,
   rmf_traffic::Duration wait_duration)
@@ -515,6 +650,42 @@ void RobotUpdateHandle::ActionExecution::update_remaining_time(
   rmf_traffic::Duration remaining_time_estimate)
 {
   _pimpl->data->remaining_time = remaining_time_estimate;
+}
+
+//==============================================================================
+void RobotUpdateHandle::ActionExecution::underway(
+  std::optional<std::string> text)
+{
+  _pimpl->data->state->update_status(rmf_task::Event::Status::Underway);
+  if (text.has_value())
+    _pimpl->data->state->update_log().info(*text);
+}
+
+//==============================================================================
+void RobotUpdateHandle::ActionExecution::error(
+  std::optional<std::string> text)
+{
+  _pimpl->data->state->update_status(rmf_task::Event::Status::Error);
+  if (text.has_value())
+    _pimpl->data->state->update_log().error(*text);
+}
+
+//==============================================================================
+void RobotUpdateHandle::ActionExecution::delayed(
+  std::optional<std::string> text)
+{
+  _pimpl->data->state->update_status(rmf_task::Event::Status::Delayed);
+  if (text.has_value())
+    _pimpl->data->state->update_log().warn(*text);
+}
+
+//==============================================================================
+void RobotUpdateHandle::ActionExecution::blocked(
+  std::optional<std::string> text)
+{
+  _pimpl->data->state->update_status(rmf_task::Event::Status::Blocked);
+  if (text.has_value())
+    _pimpl->data->state->update_log().warn(*text);
 }
 
 //==============================================================================
