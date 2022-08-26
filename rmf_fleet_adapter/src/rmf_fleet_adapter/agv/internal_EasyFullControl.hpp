@@ -60,6 +60,7 @@ public:
     RobotUpdateHandle::ActionExecutor action_executor)
   : _node(&node),
     _robot_name(std::move(robot_name)),
+    _fleet_name(std::move(fleet_name)),
     _graph(graph),
     _traits(traits),
     _get_state(std::move(get_state)),
@@ -195,7 +196,10 @@ public:
 private:
   rclcpp::Node* _node;
   const std::string& _robot_name;
-  GetRobotState get_state;
+  const std::string& _fleet_name;
+  std::shared_ptr<const Graph> _graph;
+  std::shared_ptr<const VehicleTraits> _traits;
+  GetRobotState _get_state;
   std::function<ProcessCompleted(const Navigate command)> _navigate;
   std::function<ProcessCompleted()> _stop;
   RobotUpdateHandle::ActionExecutor _action_executor;
@@ -203,8 +207,6 @@ private:
   robotStatus _status;
   bool _interrupted = false;
 
-  std::shared_ptr<const Graph> _graph;
-  std::shared_ptr<const VehicleTraits> _traits;
   std::vector<rmf_traffic::agv::Plan::Waypoint> _requested_waypoints;
   std::vector<rmf_traffic::agv::Plan::Waypoint> _remaining_waypoints;
   ArrivalEstimator _next_arrival_estimator;

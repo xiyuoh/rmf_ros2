@@ -109,7 +109,7 @@ public:
     Eigen::Vector3d position;
     std::string map_name;
     double battery_percent;
-  }
+  };
 
   /// Initialize and spin an Adapter instance in order to add fleets.
   ///
@@ -127,11 +127,12 @@ public:
   /// \param[in] robot_name
   ///   The name of the robot.
   ///
-  /// \param[in] get_position
-  ///   The position function that returns the robot's current location.
+  /// \param[in] pose
+  ///   The starting pose of the robot.
+  ///   Accepts either a known Planner::Start or an Eigen::Vector3d pose.
   ///
-  /// \param[in] get_battery
-  ///   The battery function that returns the robot's current battery status.
+  /// \param[in] get_state
+  ///   The position function that returns the robot's current location.
   ///
   /// \param[in] navigate
   ///   The API function for navigating your robot to a pose.
@@ -156,17 +157,17 @@ private:
   EasyFullControl();
   rmf_utils::unique_impl_ptr<Implementation> _pimpl;
 
-  std::recursive_mutex _mutex;
-  std::unique_lock<std::recursive_mutex> lock()
-  {
-    std::unique_lock<std::recursive_mutex> l(_mutex, std::defer_lock);
-    while (!l.try_lock())
-    {
-      // Intentionally busy wait
-    }
+  // std::recursive_mutex _mutex;
+  // std::unique_lock<std::recursive_mutex> lock()
+  // {
+  //   std::unique_lock<std::recursive_mutex> l(_mutex, std::defer_lock);
+  //   while (!l.try_lock())
+  //   {
+  //     // Intentionally busy wait
+  //   }
 
-    return l;
-  }
+  //   return l;
+  // }
 };
 
 using EasyFullControlPtr = std::shared_ptr<EasyFullControl>;

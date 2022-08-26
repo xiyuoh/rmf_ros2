@@ -165,13 +165,12 @@ std::shared_ptr<EasyFullControl> EasyFullControl::make(Configuration config)
 bool EasyFullControl::add_robot(
   const std::string& robot_name,
   Start pose,
-  GetPosition get_position,
-  std::function<double()> get_battery,
+  GetRobotState get_state,
   std::function<ProcessCompleted(const EasyFullControl::Navigate command)> navigate,
   std::function<ProcessCompleted()> stop,
   RobotUpdateHandle::ActionExecutor action_executor)
 {
-  // Create an EasyCommandHandle for this fella somehow. bring the class in somewhere
+  // Create an EasyCommandHandle for this fella somehow somewhere
   // const auto command = std::make_shared<EasyCommandHandle>(
   //   *_pimpl->adapter->node(), _pimpl->fleet_name, robot_name,cout _pimpl->graph, _pimpl->traits);
 
@@ -230,7 +229,6 @@ bool EasyFullControl::add_robot(
 bool EasyFullControl::Implementation::initialize_fleet()
 {
   const auto& node = adapter->node();
-  adapter = adapter;
   fleet_name = config.fleet_name();
   fleet_config = config.fleet_config();
   traits = std::make_shared<VehicleTraits>(config.vehicle_traits());
@@ -422,12 +420,11 @@ bool EasyFullControl::Implementation::initialize_fleet()
 
   // Accept task types
 
-  // TODO(XY): check whether need to have separate for all these. for now accept all.
+  // TODO: Currently accepting all by default, check if additional stuff is needed
   const auto consider =
   [](const nlohmann::json& description,
     rmf_fleet_adapter::agv::FleetUpdateHandle::Confirmation& confirm)
   {
-    // Do nothing for now
     confirm.accept();
   };
 
@@ -437,8 +434,6 @@ bool EasyFullControl::Implementation::initialize_fleet()
     fleet_handle->consider_patrol_requests(consider);
   }
 
-  // If the perform_deliveries parameter is true, then we just blindly accept
-  // all delivery requests.
   const bool perform_delivery = task_capabilities["delivery"].as<bool>();
   if (perform_delivery)
   {
@@ -452,8 +447,7 @@ bool EasyFullControl::Implementation::initialize_fleet()
     fleet_handle->consider_cleaning_requests(consider);
   }
 
-  // Accept actions
-  // TODO(XY): use ActionExecutor parsed in for this. For now configure this fleet to perform any kind of teleop action
+  // Configure this fleet to perform any kind of teleop action
   fleet_handle->add_performable_action("teleop", consider);
 
   return true;
