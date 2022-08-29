@@ -167,44 +167,57 @@ bool EasyFullControl::add_robot(
   Start pose,
   GetRobotState get_state,
   std::function<ProcessCompleted(const EasyFullControl::Navigate command)> navigate,
-  std::function<ProcessCompleted()> stop,
+  ProcessCompleted stop,
   RobotUpdateHandle::ActionExecutor action_executor)
 {
+  // TODO(XY): obtain stuff NOT from config yaml. temporary solution
+  const YAML::Node robot_config = _pimpl->fleet_config["robots"][robot_name];
+  const double max_delay = robot_config["robot_config"]["max_delay"].as<double>();
+  const std::string charger_waypoint_name = robot_config["rmf_config"]["charger"].as<std::string>();
+  const std::string map_name = robot_config["rmf_config"]["start"]["map_name"].as<std::string>();
+
+  std::size_t charger_waypoint = _pimpl->graph.find_waypoint(charger_waypoint_name).index();
+
+  Planner::StartSet starts;
+
+  // Use Start or compute plan starts
+  if (std::holds_alternative<Planner::Start>(pose))
+  {
+    const auto p = std::get<Planner::Start>(pose);
+    starts.push_back(p);
+  }
+  else if (std::holds_alternative<Eigen::Vector3d>(pose))
+  {
+    const auto p = std::get<Eigen::Vector3d>(pose);
+
+    // Use compute plan starts to estimate the start
+    starts = rmf_traffic::agv::compute_plan_starts(
+      *_pimpl->graph, map_name, {p.x(), p.y(), p.z()},
+      rmf_traffic_ros2::convert(_pimpl->adapter->node()->now()));
+  }
+
+  if (starts.empty())
+  {
+    RCLCPP_ERROR(_pimpl->adapter->node()->get_logger(),
+      "Unable to determine StartSet for %s", robot_name.c_str());
+
+    return false;
+  }
+
   // Create an EasyCommandHandle for this fella somehow somewhere
-  // const auto command = std::make_shared<EasyCommandHandle>(
-  //   *_pimpl->adapter->node(), _pimpl->fleet_name, robot_name,cout _pimpl->graph, _pimpl->traits);
-
-  // // TODO(XY): obtain stuff NOT from config yaml. temporary solution
-  // const YAML::Node robot_config = _pimpl->fleet_config["robots"][robot_name];
-  // const double max_delay = robot_config["robot_config"]["max_delay"].as<double>();
-  // const std::string map_name = robot_config["rmf_config"]["map_name"].as<std::string>();
-
-  // Planner::StartSet starts;
-
-  // // Use Start or compute plan starts
-  // if (std::holds_alternative<Planner::Start>(pose))
-  // {
-  //   const auto p = std::get<Planner::Start>(pose);
-  //   // Planner::StartSet starts;
-  //   starts.push_back(p);
-  // }
-  // else if (std::holds_alternative<Eigen::Vector3d>(pose))
-  // {
-  //   const auto p = std::get<Eigen::Vector3d>(pose);
-
-  //   // Use compute plan starts to estimate the start
-  //   starts = rmf_traffic::agv::compute_plan_starts(
-  //     *_pimpl->graph, map_name, {p.x(), p.y(), p.z()},
-  //     rmf_traffic_ros2::convert(_pimpl->adapter->node()->now()));
-  // }
-
-  // if (starts.empty())
-  // {
-  //   RCLCPP_ERROR(_pimpl->adapter->node()->get_logger(),
-  //     "Unable to determine StartSet for %s", robot_name.c_str());
-
-  //   return false;
-  // }
+  const auto command = std::make_shared<EasyCommandHandle>(
+    *_pimpl->adapter->node(),
+    _pimpl->fleet_name,
+    robot_name,
+    _pimpl->graph,
+    _pimpl->traits,
+    map_name,
+    max_delay,
+    charger_waypoint,
+    get_state,
+    navigate,
+    stop,
+    action_executor);
 
   // // Add robot to fleet
   // _pimpl->fleet_handle->add_robot(
